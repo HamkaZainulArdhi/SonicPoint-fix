@@ -1,0 +1,225 @@
+{
+  "main": {
+    "id": "1f09bce3cb7e9382",
+    "type": "split",
+    "children": [
+      {
+        "id": "bd0967c7b3683079",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "1d0da7e625f00a38",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Tampilan grafik"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "f76f6ff9894f245a",
+    "type": "split",
+    "children": [
+      {
+        "id": "97b33a757c9bbe24",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "00fe83123d507055",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Penjelajah berkas"
+            }
+          },
+          {
+            "id": "54eac33556dc2e97",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Penelusuran"
+            }
+          },
+          {
+            "id": "9e51fff88fb3fddf",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Penanda"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "0bc49783c98bbcf3",
+    "type": "split",
+    "children": [
+      {
+        "id": "10e245b735d67f28",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "40520584f281c5b6",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "packages/cli/knowledge/00-cli-map.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlink"
+            }
+          },
+          {
+            "id": "3eb0dcbfc722f126",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "packages/cli/knowledge/00-cli-map.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Tautan Keluar"
+            }
+          },
+          {
+            "id": "9aeb6e172da23c69",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tag"
+            }
+          },
+          {
+            "id": "1130727d779fb65f",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Semua properti"
+            }
+          },
+          {
+            "id": "d04bff8635f45f19",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "packages/cli/knowledge/00-cli-map.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Kerangka"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Buka peralih cepat": false,
+      "graph:Buka tampilan grafik": false,
+      "canvas:Buat kanvas baru": false,
+      "daily-notes:Buka catatan hari ini": false,
+      "templates:Masukkan template": false,
+      "command-palette:Buka palet perintah": false,
+      "bases:Buat basis baru": false
+    }
+  },
+  "active": "1d0da7e625f00a38",
+  "lastOpenFiles": [
+    "packages/cli/src/tui/README.md",
+    "packages/cli/src/scan/README.md",
+    "packages/cli/dist/bin/index.js",
+    "packages/cli/dist/bin",
+    "packages/cli/dist/src/cli/program.js",
+    "packages/cli/dist/src/cli/commands.js",
+    "packages/cli/dist/src/cli/output.js",
+    "packages/cli/dist/src/scan/reports/formatSchema.js",
+    "packages/cli/dist/src/scan/reports/formatContext.js",
+    "packages/cli/dist/src/scan/reports",
+    "packages/cli/dist/src/tui/views/schemaView.js",
+    "packages/cli/dist/src/tui/views/scanView.js",
+    "packages/cli/knowledge/08-schema-context.md",
+    "apps/web/knowledge/01-pages.md",
+    "packages/cli/knowledge/07-tui-repl.md",
+    "packages/cli/src/tui/logo.png",
+    "packages/cli/src/tui/opencode-wordmark-dark.png",
+    "packages/cli/src/tui/agent.md",
+    "packages/cli/knowledge/03-report.md",
+    "packages/cli/knowledge/00-cli-map.md",
+    "packages/cli/knowledge/06-commands-flags.md",
+    "packages/cli/knowledge/01-scan.md",
+    "packages/cli/knowledge/04-config.md",
+    "knowledge/03-contracts.md",
+    "knowledge/00-map.md",
+    "apps/web/knowledge/03-config-decisions-todo.md",
+    "apps/web/knowledge/02-components-queries.md",
+    "apps/web/knowledge/00-web-map.md",
+    "packages/cli/knowledge/05-decisions-todo.md",
+    "knowledge/02-dataflow.md",
+    "knowledge/01-glossary.md",
+    "packages/cli/knowledge/02-run.md",
+    "knowledge/06-todo.md",
+    "knowledge/05-constraints.md",
+    "knowledge/04-decisions.md"
+  ]
+}

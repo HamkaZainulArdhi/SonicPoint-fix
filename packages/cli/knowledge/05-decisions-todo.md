@@ -1,0 +1,52 @@
+---
+title: CLI Decisions and TODO
+tags:
+  - sonicpoint
+  - cli
+  - adr
+  - todo
+status: todo
+source:
+  - packages/cli/AGENTS.md
+  - src/cli/commands.ts
+  - src/domain/session.ts
+---
+
+# CLI Decisions & TODO
+
+## Decisions (CLI-specific; global di Vault Root `04-decisions.md`)
+
+- **C-ADR-01**: Satu traverse per file di `routes.ts`. Reason: performa + konsistensi imports/mounts/endpoints.
+- **C-ADR-02**: Entry = mount files yang tak di-mount siapapun; fallback semua jika pure cycle. Reason: circular imports terminate via `visited Set`.
+- **C-ADR-03**: Test results = single `TestResult[]` (`kind: executed|skipped`). Reason: tidak ada array paralel.
+- **C-ADR-04**: `cli.test.ts` spawn real CLI via `bin/index.ts`; fixtures di `os.tmpdir()`. Reason: e2e command-level.
+- **C-ADR-05**: Interactive REPL sebagai interface tambahan; command mode tidak berubah. Reason: backward compat wajib; `program.ts` hanya fallback saat argv kosong. Detail: [[07-tui-repl]].
+- **C-ADR-06**: Prompt custom via `useInput` (tanpa `ink-text-input`), buffer append-only, Enter-accept 2-tahap. Reason: zero dep baru + satu handler keyboard (keputusan user). Catatan: klausa "tanpa history" DIAMANDEMEN oleh C-ADR-18 — history arrow ditambahkan atas request user berikutnya.
+- **C-ADR-18**: History shell-style via ↑/↓ — overlay tetap pemilik arrow hanya saat terlihat (bare `/token`); selain itu arrow browse history (`tui/repl/history.ts` murni: push tiap submit non-kosong incl. salah ketik, cap 100, tanpa dedup). Session-only tanpa file; independen dari transcript (`/clear` tak menyentuhnya); flow `/config` kebal (secret tak pernah lewat `submit()`); mengetik/Esc reset ke present. Render Ink tetap tak di-unit-test. Reason: request user ("seperti shell pada umumnya"); arrow tadinya no-op di posisi itu sehingga tak ada perilaku lama yang hilang.
+- **C-ADR-07**: TUI tidak punya business logic; `/scan /schema /context` reuse core (`scanEndpoints`, `buildApiGraph`, `buildKnowledgeGraph`). Reason: no-duplication; render Ink tidak di-unit-test, hanya layer murni (`repl/*`, `views/*`).
+- **C-ADR-08**: Satu formatter murni, dua sink. `scan/reports/formatSchema.ts` + `scan/reports/formatContext.ts` return rows tanpa console/Ink; `cli/output.ts` print (chalk), `tui/views/schemaView.ts` + `tui/views/contextView.ts` map ke tone. Reason: command-mode dan REPL selalu konsisten; TUI tidak import output, output tidak import TUI.
+- **C-ADR-09**: Tema TUI Amber/Sonic (aksen `yellow`, bolt `white`). Reason: pilihan user; sempat Electric cyan, diganti atas permintaan eksplisit.
+- **C-ADR-10**: Palette suggestion = overlay floating asli (`position:absolute`, drop-up di atas prompt, menutupi konten). Reason: permintaan eksplisit user ("ingin overlay dan menutupi konten"); inline-flow sempat dicoba lalu dibuang. Viewport fixed-height juga dibuang karena bikin gap besar header↔prompt.
+- **C-ADR-11**: Slash `/routes` + `/help` dihapus (bukan stub). Pengganti guidance: bare-slash autocomplete list semua + pesan `unknown` memuat daftar available data-driven dari registry + Home hint `Type / to see all commands`. Reason: permintaan user; mengurangi command mati.
+- **C-ADR-12**: Bahasa visual report TUI: divider `─` di bawah endpoint + `✓` (ketemu) vs `◯` (absen) + endpoint ber-gap kuning full-line. Reason: disetujui user agar `/context` seproper `/schema`; glyph `✓/◯` terbukti 1-cell di terminal user via `/schema`.
+- **C-ADR-13**: `scan/` + `tui/` dipecah per fitur (`scan`: core/routes/schemas/knowledge/snippets/reports; `tui`: shell/repl/views) + file di-rename deskriptif (`scanner.ts`→`routes/scanEndpoints.ts`, `handlers.ts`→`repl/dispatchCommands.ts`, …). Reason: user kebingungan baca struktur flat; tanpa barrel `index.ts` (konvensi deep-import dipertahankan, DAG tak berubah, nol logika disentuh).
+- **C-ADR-14**: README di `src/scan/` + `src/tui/` adalah **docs pribadi non-vault** (tanpa frontmatter, tanpa `[[link]]`) — deskripsi folder/file bahasa santai non-teknis. Reason: user mau cepat paham struktur; detail teknis tetap single-source di vault `knowledge/`.
+- **C-ADR-15**: `/test` strict method-wajib + bulk-write ditolak — menyimpang SENGAJA dari `send` (`send /path` tanpa `--method` mengabaikan path; `/test /path` tanpa method = error; `/test POST` tanpa path = error, hanya `GET` boleh bulk). Reason: REPL tak punya `--flag` untuk disambiguasi; bulk-write satu-Enter ke backend user terlalu berbahaya; fail-fast + hint copy-paste lebih jujur. Parser murni di `tui/repl/testArgs.ts`.
+- **C-ADR-16**: `/test` consumer AUTH pasif + tanpa prompt — kredensial hanya dibaca via `loadCredentials()` (ditulis `/config`/`init`); missing/rusak → hard-block `Run /config first`. `prompter` selalu `async () => null` (`:param` gagal → `skipped` jujur); tanpa `ora` (rebut stdout Ink). Satu-satunya ubahan core: `RunOptions.paramDefaults` (seed cache `:param` untuk path konkret eksplisit). Async via `runTest()` + guard `isRunning` di `ReplApp` (satu run dalam satu waktu); secret tak pernah masuk transcript. Reason: `inquirer`/`ora` tak bisa hidup di Ink TTY; core adalah kode yang nembak server/DB user sehingga safety > kenyamanan.
+- **C-ADR-17**: `/config` Ink-native 6-langkah gantikan `inquirer` — `askCredentials` tak bisa dipakai di REPL (rebut stdin `useInput`). State machine murni di `tui/repl/configForm.ts` (default = fallback existing `prompt.ts`, validasi URL/endpoint + email/password-wajib-kalau-token-kosong, `draftToCredentials` trim + token-kosong→`undefined` persis `prompt.ts:34`); shaping di `tui/views/configView.ts` (`toConfigFlowLines` + `displayDraftValue` redact, sejajar C-ADR-08); `ReplApp` mode `configFlow` intercept semua key (Enter validasi→next, Esc cancel tanpa tulis, buffer pre-fill fallback = Enter-keep-current). Tulis hanya di Step 6/6 via `saveCredentials` yang sama dengan `init` (byte-identical, teks sukses identik `✔ Backend target config saved.`); tanpa probe network (keputusan user). Password ter-mask (`•`) + ter-redact (`(set)`/`(empty)`); `/clear` tengah-flow = cancel + clear (keputusan user); guard silang dengan `isRunning`. Reason: satu handler keyboard (C-ADR-06) + file adalah kontrak `/test`.
+
+## TODO
+
+| ID | Apa | Source |
+|---|---|---|
+| C-01 | Verifikasi U-02 `dotenv` tidak di-import — apakah `.env` mati? | providers |
+| C-02 | Putuskan nasib tabel `schemas` (U-01): implementasikan publish atau tandai deprecated | store.ts vs SQL |
+| C-03 | Klarifikasi DELETE non-write + Bearer-kosong + GET-skip | run/ |
+| C-04 | Framework selain Express di luar scope — dokumentasikan, jangan setengah dukung | scan/ |
+| C-06 | ~~Wire `/schema` ke `scanSchemas` existing~~ — DONE (via `buildApiGraph` + `scan/reports/formatSchema.ts`) | [[07-tui-repl]] |
+| C-10 | ~~Wire `/context` ke `buildKnowledgeGraph` existing~~ — DONE (via `scan/reports/formatContext.ts`, glow-up divider + `✓/◯`, 52/52 test) | [[07-tui-repl]] |
+| C-07 | ~~Wire `/test <METHOD> [PATH]` ke `runSession` existing~~ — DONE (strict parser `testArgs.ts` + `toTestLines` + `runTest` async + AUTH gate + `paramDefaults`, 70/70 test) | [[07-tui-repl]] |
+| C-08 | Wire `/report` ke `SessionStore.load + publishSession` existing | [[07-tui-repl]] |
+| C-09 | ~~Wire `/config` ke `init` flow existing~~ — DONE (state machine `configForm.ts` + `configView.ts` + `configFlow` di `ReplApp`, hanya simpan file, 86/86 test) | [[07-tui-repl]] |
+
+![[cli-index.base]]

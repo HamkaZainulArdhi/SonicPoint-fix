@@ -1,0 +1,23 @@
+{
+  "name": "sonicpoint",
+  "version": "2.9.9",
+  "private": true,
+  "description": "SonicPoint monorepo — CLI (packages/cli) + dashboard web (apps/web) + Supabase backend (supabase/)",
+  "packageManager": "pnpm@12.4.1",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "dev:cli": "pnpm --filter sonic-point dev",
+    "build": "pnpm --filter sonic-point build && pnpm --filter web build",
+    "build:web": "pnpm --filter web build",
+    "build:cli": "pnpm --filter sonic-point build",
+    "start": "pnpm --filter web start",
+    "start:cli": "pnpm --filter sonic-point start",
+    "typecheck": "pnpm --recursive typecheck",
+    "test": "pnpm --filter sonic-point test",
+    "lint": "pnpm --recursive lint"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  }
+}

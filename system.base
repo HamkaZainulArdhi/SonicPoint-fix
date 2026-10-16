@@ -1,0 +1,24 @@
+filters:
+  and:
+    - file.inFolder("knowledge")
+    - 'file.ext == "md"'
+properties:
+  title:
+    displayName: Title
+  status:
+    displayName: Status
+views:
+  - type: table
+    name: Index
+    order:
+      - file.name
+      - title
+      - status
+  - type: table
+    name: Debt
+    filters:
+      and:
+        - 'status == "todo"'
+    order:
+      - file.name
+      - title

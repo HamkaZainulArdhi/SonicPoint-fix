@@ -1,0 +1,51 @@
+{
+  "name": "sonic-point",
+  "version": "2.9.9",
+  "description": "AI Powered API Endpoint Scanner & Sender",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx bin/index.ts",
+    "clean": "node --input-type=module -e \"import fs from 'node:fs'; fs.rmSync('dist', { recursive: true, force: true })\"",
+    "prebuild": "pnpm run clean",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "start": "node dist/bin/index.js"
+  },
+  "bin": {
+    "sonic-point": "./dist/bin/index.js"
+  },
+  "keywords": [
+    "cli",
+    "api",
+    "scanner",
+    "endpoint",
+    "testing"
+  ],
+  "author": "Hamka zainardi",
+  "dependencies": {
+    "@babel/parser": "^7.29.3",
+    "@babel/traverse": "^7.29.0",
+    "@babel/types": "^7.29.0",
+    "@google/generative-ai": "^0.12.0",
+    "@supabase/supabase-js": "^2.105.4",
+    "boxen": "^8.0.1",
+    "chalk": "^5.6.2",
+    "cli-table3": "^0.6.5",
+    "commander": "^14.0.3",
+    "dotenv": "^16.4.5",
+    "ink": "^7.1.1",
+    "inquirer": "^13.4.2",
+    "log-symbols": "^7.0.1",
+    "ora": "^9.4.0",
+    "react": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/babel__traverse": "^7.28.0",
+    "@types/node": "^25.7.0",
+    "@types/react": "^19.3.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  }
+}
