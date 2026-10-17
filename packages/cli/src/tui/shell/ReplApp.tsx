@@ -7,7 +7,8 @@ import { useRef, useState, type ReactNode } from "react";
 import { Box, Text, useApp, useInput } from "ink";
 import { ParsedInput, SlashCommand, parseSlashInput, resolveEnter, suggestCommands } from "../repl/commandRegistry.js";
 import { browseDown, browseUp, emptyHistory, HistoryState, pushHistory, resetBrowsing } from "../repl/history.js";
-import { handleParsed, runTest } from "../repl/dispatchCommands.js";
+import { handleParsed, runReport, runTest } from "../repl/dispatchCommands.js";
+import { SpinnerLine } from "./Spinner.js";
 import { OutputLine, TranscriptEntry, capTranscript } from "../repl/transcript.js";
 import {
   ConfigDraft,
@@ -40,6 +41,7 @@ export function ReplApp({ rootDir, projectName, projectSlug, framework }: ReplAp
   const [highlight, setHighlight] = useState(0);
   const [dismissed, setDismissed] = useState(false);
   const [, setRunning] = useState(false);
+  const [pending, setPending] = useState<{ id: number; label: string } | null>(null);
   const nextId = useRef(1);
   // Ref mirror — useInput callbacks capture stale state otherwise.
   const runningRef = useRef(false);
@@ -265,7 +267,7 @@ export function ReplApp({ rootDir, projectName, projectSlug, framework }: ReplAp
             {
               id: nextId.current++,
               command: raw.trim(),
-              lines: [{ text: "A test is already running — wait for it to finish.", tone: "yellow" }],
+              lines: [{ text: "Already running — wait for it to finish.", tone: "yellow" }],
             },
           ]),
         );
@@ -298,7 +300,7 @@ export function ReplApp({ rootDir, projectName, projectSlug, framework }: ReplAp
             {
               id: nextId.current++,
               command: raw.trim(),
-              lines: [{ text: "A test is already running — wait for it to finish.", tone: "yellow" }],
+              lines: [{ text: "Already running — wait for it to finish.", tone: "yellow" }],
             },
           ]),
         );
@@ -308,6 +310,7 @@ export function ReplApp({ rootDir, projectName, projectSlug, framework }: ReplAp
       const command = raw.trim();
       runningRef.current = true;
       setRunning(true);
+      setPending({ id, label: "Testing…" });
       setEntries((prev) =>
         capTranscript([...prev, { id, command, lines: [{ text: "Testing…", tone: "dim" }] }]),
       );
@@ -317,6 +320,41 @@ export function ReplApp({ rootDir, projectName, projectSlug, framework }: ReplAp
       } finally {
         runningRef.current = false;
         setRunning(false);
+        setPending((current) => (current?.id === id ? null : current));
+      }
+      return;
+    }
+
+    // /report is async (network) + guarded like /test: one run at a time.
+    if (parsed.kind === "command" && parsed.command.name === "report") {
+      if (runningRef.current) {
+        setEntries((prev) =>
+          capTranscript([
+            ...prev,
+            {
+              id: nextId.current++,
+              command: raw.trim(),
+              lines: [{ text: "Already running — wait for it to finish.", tone: "yellow" }],
+            },
+          ]),
+        );
+        return;
+      }
+      const id = nextId.current++;
+      const command = raw.trim();
+      runningRef.current = true;
+      setRunning(true);
+      setPending({ id, label: "Publishing…" });
+      setEntries((prev) =>
+        capTranscript([...prev, { id, command, lines: [{ text: "Publishing…", tone: "dim" }] }]),
+      );
+      try {
+        const lines = await runReport(rootDir, parsed.args);
+        setEntries((prev) => prev.map((entry) => (entry.id === id ? { ...entry, lines } : entry)));
+      } finally {
+        runningRef.current = false;
+        setRunning(false);
+        setPending((current) => (current?.id === id ? null : current));
       }
       return;
     }
@@ -329,7 +367,7 @@ export function ReplApp({ rootDir, projectName, projectSlug, framework }: ReplAp
             {
               id: nextId.current++,
               command: raw.trim(),
-              lines: [{ text: "A test is already running — wait for it to finish.", tone: "yellow" }],
+              lines: [{ text: "Already running — wait for it to finish.", tone: "yellow" }],
             },
           ]),
         );
@@ -381,9 +419,11 @@ export function ReplApp({ rootDir, projectName, projectSlug, framework }: ReplAp
             <Text bold color="yellow">› </Text>
             <Text>{entry.command}</Text>
           </Text>
-          {entry.lines.map((line, index) => (
-            <TranscriptLine key={index} text={line.text} tone={line.tone} />
-          ))}
+          {pending?.id === entry.id ? (
+            <SpinnerLine label={pending.label} />
+          ) : (
+            entry.lines.map((line, index) => <TranscriptLine key={index} text={line.text} tone={line.tone} />)
+          )}
         </Box>
       ))}
       value={value}

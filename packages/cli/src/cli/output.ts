@@ -6,12 +6,14 @@ import Table from "cli-table3";
 import boxen from "boxen";
 import logSymbols from "log-symbols";
 import { Endpoint } from "../domain/endpoint.js";
+import { SampledRef } from "../domain/ref.js";
 import { SchemaFile } from "../domain/schema.js";
 import { ApiGraph } from "../scan/schemas/buildApiGraph.js";
 import { ReportRow, formatBodyEndpoints } from "../scan/reports/formatSchema.js";
 import { ContextRow, formatContextGraph } from "../scan/reports/formatContext.js";
 import { KnowledgeGraph } from "../domain/graph.js";
 import { TestResult, TestSession, summarize } from "../domain/session.js";
+import { refNotice } from "../run/refs.js";
 import { PublishOutcome } from "../report/publish.js";
 
 export function banner(title: string): void {
@@ -253,6 +255,16 @@ export function renderPublishOutcome(outcome: PublishOutcome): boolean {
 
   fail(outcome.reason);
   return false;
+}
+
+/**
+ * Reference ids captured or refreshed during a run — one dim line each
+ * (`↳ refs.item = item-1 (saved)`), printed before the result table.
+ */
+export function renderRefNotices(notices: SampledRef[]): void {
+  for (const notice of notices) {
+    console.log(chalk.dim(refNotice(notice)));
+  }
 }
 
 export function renderWarningBox(lines: string[]): void {

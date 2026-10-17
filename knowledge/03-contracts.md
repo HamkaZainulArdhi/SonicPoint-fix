@@ -39,10 +39,17 @@ Implikasi: CLI wajib `service_role` (`store.ts:22`). Web hanya `anon` (`supabase
 
 ## API implisit
 
-Tidak ada backend custom / Route Handler / Edge Function. API = PostgREST auto dari tabel:
+Tanpa backend custom untuk **data**: API = PostgREST auto dari tabel.
 
-- CLI writes: `projects.upsert`, `sessions.insert/update`, `endpoints.insert`.
+- CLI writes: `projects.upsert`, `sessions.insert/update`, `endpoints.insert` (lewat `POST /api/report` di platform, atau Supabase langsung sebagai fallback advanced — ADR-09).
 - Web reads: 5 fungsi di `queries.ts` (`getProjects`, `getProjectBySlug`, `getSessionsByProject`, `getSessionById`, `getEndpointsBySession`), order `updated_at desc / created_at desc / execution_order asc`.
+
+Dua Route Handler server-only **bukan** API data, cuma gerbang secret (ADR-09):
+
+| Route | Fungsi | Secret yang dipakai |
+|---|---|---|
+| `POST /api/ai/payload` | `{prompt}` → `{payload, model}` (Gemini, failover kandidat) | `GEMINI_API_KEY` |
+| `POST /api/report` | `{session, filter?}` → tulis project/session/endpoints (passed + failed + skipped) | `SUPABASE_SERVICE_ROLE_KEY` |
 
 ## Seed
 

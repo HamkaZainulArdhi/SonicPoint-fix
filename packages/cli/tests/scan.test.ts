@@ -1,22 +1,8 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
 import { describe, it } from "node:test";
 
 import { scanEndpoints, ScanError } from "../src/scan/routes/scanEndpoints.js";
-
-function fixture(files: Record<string, string>): string {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "sp-scan-"));
-
-  for (const [relative, content] of Object.entries(files)) {
-    const full = path.join(root, relative);
-    fs.mkdirSync(path.dirname(full), { recursive: true });
-    fs.writeFileSync(full, content.trimStart(), "utf-8");
-  }
-
-  return root;
-}
+import { tmpProject } from "./helpers/project.js";
 
 const APP = `
   import express from "express";
@@ -28,7 +14,7 @@ const APP = `
 
 describe("scanEndpoints", () => {
   it("resolves nested prefixes across files", () => {
-    const root = fixture({
+    const root = tmpProject("scan", {
       "src/app.js": APP,
       "src/routes/items.js": `
         import express from "express";
@@ -45,7 +31,7 @@ describe("scanEndpoints", () => {
   });
 
   it("supports route chains and require()", () => {
-    const root = fixture({
+    const root = tmpProject("scan", {
       "src/app.js": `
         const express = require("express");
         const r = require("./routes/r.js");
@@ -67,7 +53,7 @@ describe("scanEndpoints", () => {
   });
 
   it("ignores unmounted files and deduplicates", () => {
-    const root = fixture({
+    const root = tmpProject("scan", {
       "src/app.js": APP,
       "src/routes/items.js": `
         import express from "express";
@@ -90,7 +76,7 @@ describe("scanEndpoints", () => {
   });
 
   it("terminates on circular router imports", () => {
-    const root = fixture({
+    const root = tmpProject("scan", {
       "src/app.js": `
         import express from "express";
         import a from "./a.js";
@@ -120,7 +106,7 @@ describe("scanEndpoints", () => {
   });
 
   it("throws when no entry file exists", () => {
-    const root = fixture({
+    const root = tmpProject("scan", {
       "src/plain.js": `export const x = 1;`,
     });
 

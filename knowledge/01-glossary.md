@@ -20,6 +20,8 @@ source:
 | Skipped | Hasil yang tidak di-request (param dinamis / tanpa payload). Disimpan sebagai `status_code='SKIPPED'`, `success=false`, `latency_ms=0`. | `store.ts:88-96` |
 | Schema | Definisi validasi Joi/Zod/Yup. Tabel ada, tapi **belum ada insert/select di CLI/Web** — lihat [[05-constraints]]. | `schemas` |
 | Report URL | `${SONIC_POINT_REPORT_BASE_URL}/report/:sessionId`. `undefined` jika env unset. | `store.ts:125-130` |
+| Reference id (`refs`) | Id **nyata** untuk FK body (`lahanId`) hasil sampling GET collection user, di-cache di `.sonic-point.json` per noun + `host`; `stale` = 404 terakhir → resample run berikutnya. Tidak pernah dikarang AI, tidak pernah dibuatkan datanya. | ADR-08; `run/refs.ts` |
+| Platform BE | Deployment Next.js pemegang secret: `/api/ai/payload` (Gemini) + `/api/report` (service_role). CLI terbit tanpa key. | ADR-09 |
 | Shareable | Report bisa dibuka tanpa login (anon SELECT). | RLS di [[03-contracts]] |
 
 Lihat aliran: [[02-dataflow]]. Kontrak kolom: [[03-contracts]].

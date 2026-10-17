@@ -4,6 +4,16 @@
 
 import { Endpoint } from "../domain/endpoint.js";
 import { Fetch, joinUrl } from "./http.js";
+import {
+  dynamicParams,
+  firstResource,
+  hasParams,
+  idOf,
+  lastSegment,
+  singular,
+  stripIdSuffix,
+  stripTrailingSlash,
+} from "./resources.js";
 
 export interface ParamPrompter {
   askParam(paramName: string): Promise<string | null>;
@@ -104,64 +114,16 @@ async function sampleId(
     const resource = firstResource(await response.json());
     if (!resource) return null;
 
-    return idOf(resource, param);
+    return idOf(resource, paramIdKeys(param));
   } catch {
     return null;
   }
 }
 
-function firstResource(value: unknown): Record<string, unknown> | null {
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      const found = firstResource(item);
-      if (found) return found;
-    }
-    return null;
-  }
-
-  if (!value || typeof value !== "object") return null;
-  const obj = value as Record<string, unknown>;
-
-  for (const key of ["data", "items", "results", "rows", "docs", "records"]) {
-    if (key in obj) {
-      const found = firstResource(obj[key]);
-      if (found) return found;
-    }
-  }
-
-  if ("id" in obj || "uuid" in obj || "_id" in obj) return obj;
-
-  for (const nested of Object.values(obj)) {
-    const found = firstResource(nested);
-    if (found) return found;
-  }
-
-  return obj;
-}
-
-function idOf(resource: Record<string, unknown>, param: string): string | null {
+function paramIdKeys(param: string): string[] {
   const base = stripIdSuffix(param);
 
-  for (const field of ["id", "uuid", "_id", param, base, `${base}Id`, `${base}_id`]) {
-    const value = resource[field];
-    if (typeof value === "string" || typeof value === "number") {
-      return String(value);
-    }
-  }
-
-  return null;
-}
-
-export function dynamicParams(routePath: string): string[] {
-  return [...routePath.matchAll(/:([A-Za-z0-9_]+)/g)].map((match) => match[1]);
-}
-
-function hasParams(routePath: string): boolean {
-  return dynamicParams(routePath).length > 0;
-}
-
-function stripTrailingSlash(routePath: string): string {
-  return routePath === "/" ? routePath : routePath.replace(/\/+$/, "") || "/";
+  return [...new Set(["id", "uuid", "_id", param, base, `${base}Id`, `${base}_id`])];
 }
 
 function parentCollection(routePath: string, param: string): string | null {
@@ -172,26 +134,8 @@ function parentCollection(routePath: string, param: string): string | null {
   return `/${segments.slice(0, index).join("/")}`;
 }
 
-function stripIdSuffix(param: string): string {
-  return param
-    .replace(/[_-]?id$/i, "")
-    .replace(/([a-z])([A-Z])/g, "$1-$2")
-    .toLowerCase();
-}
-
-function singular(value: string): string {
-  const lower = value.toLowerCase();
-  if (lower.endsWith("ies")) return lower.slice(0, -3) + "y";
-  if (lower.endsWith("ses")) return lower.slice(0, -2);
-  if (lower.endsWith("s") && lower.length > 1) return lower.slice(0, -1);
-  return lower;
-}
-
-function lastSegment(routePath: string): string {
-  const segments = stripTrailingSlash(routePath).split("/").filter(Boolean);
-  return segments[segments.length - 1] ?? "";
-}
-
+/** Admin and public namespaces must not sample ids from each other. */
 function isAdmin(routePath: string): boolean {
   return stripTrailingSlash(routePath).startsWith("/api/admin");
 }
+

@@ -201,7 +201,7 @@ function searchDefinition(
   return null;
 }
 
-/** Find a definition matching an expression like `lahanController.createLahan`. */
+/** Find a definition matching an expression like `itemController.createItem`. */
 function lookup(
   symbols: FileSymbols | undefined,
   expression: string,

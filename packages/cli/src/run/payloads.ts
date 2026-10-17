@@ -1,35 +1,69 @@
 // Request body resolution for write methods: AI generation when a client
 // is available, deterministic fallback otherwise. Returns null when no
 // payload can be produced (caller should skip the endpoint).
+//
+// Body fields that reference existing records (`itemId`) are resolved first
+// by sampling the user's own API (see refs.ts) and are then pinned into the
+// answer — the AI is told the value and the result is overwritten with it,
+// so an invented id can never reach the server.
 
 import { Endpoint } from "../domain/endpoint.js";
 import { SchemaDefinition } from "../domain/schema.js";
 import { JsonObject } from "../domain/session.js";
-import { GeminiClient } from "../ai/client.js";
+import type { AiGenerator } from "../ai/remote.js";
 import { buildPayloadPrompt } from "../ai/prompt.js";
+import { RefResolver, refFields } from "./refs.js";
+
+export interface ResolvedFieldRef {
+  field: string;
+  noun: string;
+  /** True when the value came from the `.sonic-point.json` cache. */
+  fromCache: boolean;
+}
 
 export interface ResolvedPayload {
   body: JsonObject;
   source: "gemini" | "fallback";
+  /** Reference fields that were pinned, used to mark stale ids later. */
+  refs: ResolvedFieldRef[];
 }
 
 export async function resolvePayload(
   endpoint: Endpoint,
   schema: SchemaDefinition | undefined,
-  ai: GeminiClient | null,
+  ai: AiGenerator | null,
+  refs: RefResolver | null = null,
 ): Promise<ResolvedPayload | null> {
   if (!isWriteMethod(endpoint.method) || !schema) return null;
 
-  if (!ai) {
-    return { body: fallbackPayload(schema), source: "fallback" };
+  const pinned: Record<string, string> = {};
+  const resolved: ResolvedFieldRef[] = [];
+
+  if (refs) {
+    for (const { field, noun } of refFields(schema)) {
+      const hit = await refs.resolve(noun);
+      if (!hit.value) continue;
+
+      pinned[field] = hit.value;
+      resolved.push({ field, noun, fromCache: hit.fromCache });
+    }
   }
 
-  const generated = await ai.generate(buildPayloadPrompt(endpoint, schema));
+  if (!ai) {
+    return { body: pin(fallbackPayload(schema), pinned), source: "fallback", refs: resolved };
+  }
+
+  const generated = await ai.generate(buildPayloadPrompt(endpoint, schema, pinned));
   const coerced = generated ? coerceToSchema(generated, schema) : null;
 
   if (!coerced || Object.keys(coerced).length === 0) return null;
 
-  return { body: coerced, source: "gemini" };
+  return { body: pin(coerced, pinned), source: "gemini", refs: resolved };
+}
+
+/** Resolved reference values win over anything the model produced. */
+function pin(body: JsonObject, pinned: Record<string, string>): JsonObject {
+  return Object.keys(pinned).length === 0 ? body : { ...body, ...pinned };
 }
 
 function isWriteMethod(method: string): boolean {

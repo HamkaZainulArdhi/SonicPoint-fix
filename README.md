@@ -48,12 +48,14 @@ NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
 ```
 
-4. Untuk publish dari CLI, set service_role key + base URL report:
+4. Publish dari CLI tidak butuh key: session dikirim ke platform BE (`sonic-point.vercel.app`, bisa di-override `SONIC_POINT_PLATFORM_URL`), yang menulis dengan service_role-nya sendiri. Env platform (Vercel Production, server-only): `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY` + `GEMINI_MODEL`(+`GEMINI_MODEL_CANDIDATES`), `SONIC_POINT_REPORT_BASE_URL`.
 
 ```bash
-sonic-point init
-# atau via env: SONIC_POINT_* + SONIC_POINT_REPORT_BASE_URL=http://localhost:3000
+sonic-point init     # tanya base URL Express milikmu (target yang diuji)
+# Advanced/lokal: sonic-point init juga menerima key Gemini/Supabase sendiri + SONIC_POINT_REPORT_BASE_URL
 ```
+
+5. FK body seperti `lahanId` tidak dikarang AI: id nyata di-sampling dari GET collection API-mu lalu di-cache di `.sonic-point.json` (`refs`). Kalau collection kosong, endpoint dibiarkan gagal (404) apa adanya — bukan laporan palsu.
 
 ## Penyesuaian dependensi saat penyatuan
 

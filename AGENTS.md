@@ -29,6 +29,7 @@ supabase/
 pnpm install                              # install semua workspace
 pnpm dev                                  # Next.js dev server (http://localhost:3000)
 pnpm --filter web typecheck               # tsc --noEmit untuk apps/web
+pnpm --filter sonic-point typecheck       # tsc src+bin+tests (tsconfig.test.json)
 pnpm --filter sonic-point test            # node:test CLI via tsx
 pnpm --filter sonic-point build           # clean + tsc → dist/
 pnpm build                                # CLI + web (verifikasi sebelum commit)
@@ -40,9 +41,10 @@ Tidak ada test runner untuk web — belum ada test. `next lint` deprecated di Ne
 
 - **Semua pages web `force-dynamic`.** Data berubah tiap CLI publish, jadi tidak ada static prerender. Jangan hapus `export const dynamic = "force-dynamic"` — build akan gagal tanpa Supabase env kalau dihapus.
 - **Supabase client web harus lazy (`getSupabase()`).** Eager `createClient` di module scope merusak `next build` saat env belum diisi. Query selalu lewat `queries.ts`.
-- **Env web hanya 2 var:** `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` di `apps/web/.env.local` (lihat `.env.example`). Tidak ada server-side secret — FE read-only via anon key.
-- **RLS: anon boleh SELECT, tidak boleh WRITE.** Write hanya dari CLI pakai service_role key. Jangan tambah write policy untuk anon.
+- **Env web: client anon + server-only.** Client hanya `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` (read-only). Server-only (Vercel Production, jangan prefix `NEXT_PUBLIC_`): `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY` + `GEMINI_MODEL`(+`_CANDIDATES`), `SONIC_POINT_REPORT_BASE_URL`. Lihat `.env.example` + ADR-09.
+- **RLS: anon boleh SELECT, tidak boleh WRITE.** Write hanya lewat `service_role` — dipegang route `/api/report` di platform; CLI lokal tanpa key cuma bisa fallback menulis langsung kalau user memang punya service_role (mode advanced). Jangan tambah write policy untuk anon.
 - **Schema SQL adalah contract web ↔ CLI.** Kalau ubah tabel/kolom di `supabase/migrations/`, update `apps/web/src/types/index.ts`, `apps/web/src/lib/queries.ts`, dan sisi CLI (`packages/cli/src/report/`) bersamaan. Tambah migration baru, jangan edit `001_` yang sudah di-apply.
+- **FK body (`lahanId`) di-sampling, bukan dikarang.** Nilai id nyata diambil dari GET collection milik API user lalu di-cache di `.sonic-point.json` (`refs`: flat per noun + `host`, flag `stale` self-heal). Jangan pernah menjalankan POST producer untuk "membuat" data — kalau tak ada id, biarkan payload apa adanya dan laporkan 404 di report. Tulis cache hanya via `saveRefs()`. Detail: `knowledge/04-decisions.md` ADR-08 + `packages/cli/knowledge/02-run.md`.
 - **Next.js 15: `params` adalah Promise.** Di dynamic routes selalu `const { x } = await params`, bukan akses langsung.
 - **Tailwind v4** (`@import "tailwindcss"` di `globals.css`, plugin via `@tailwindcss/postcss`). Tidak ada `tailwind.config.js`.
 - **Types FE dan CLI sengaja duplikat**, bukan shared package (keputusan desain). Sinkronisasi manual via schema SQL.

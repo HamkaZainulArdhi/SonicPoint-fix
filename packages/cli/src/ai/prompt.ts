@@ -1,9 +1,14 @@
 import { Endpoint } from "../domain/endpoint.js";
 import { SchemaDefinition, SchemaProperty } from "../domain/schema.js";
 
-export function buildPayloadPrompt(endpoint: Endpoint, schema: SchemaDefinition): string {
+export function buildPayloadPrompt(
+  endpoint: Endpoint,
+  schema: SchemaDefinition,
+  knownRefs: Record<string, string> = {},
+): string {
   const required = schema.properties.filter((prop) => prop.required);
   const optional = schema.properties.filter((prop) => !prop.required);
+  const refNames = Object.keys(knownRefs);
 
   const lines = [
     "You are generating a realistic API request body.",
@@ -20,6 +25,14 @@ export function buildPayloadPrompt(endpoint: Endpoint, schema: SchemaDefinition)
     lines.push(
       "Optional fields (choose 1-2 if appropriate):",
       ...optional.map((prop) => `- ${describe(prop)}`),
+      "",
+    );
+  }
+
+  if (refNames.length > 0) {
+    lines.push(
+      "Resolved field values — these reference existing records; copy them exactly, never invent them:",
+      ...refNames.map((name) => `- ${name} = ${knownRefs[name]}`),
       "",
     );
   }

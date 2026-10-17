@@ -1,24 +1,14 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
 import { describe, it } from "node:test";
 
 import { buildKnowledgeGraph } from "../src/scan/knowledge/buildKnowledge.js";
 import { toContextLines } from "../src/tui/views/contextView.js";
 import { handleParsed } from "../src/tui/repl/dispatchCommands.js";
 import { parseSlashInput } from "../src/tui/repl/commandRegistry.js";
+import { tmpProject } from "./helpers/project.js";
 
 function fixture(files: Record<string, string>): string {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "sp-tui-context-"));
-
-  for (const [relative, content] of Object.entries(files)) {
-    const full = path.join(root, relative);
-    fs.mkdirSync(path.dirname(full), { recursive: true });
-    fs.writeFileSync(full, content.trimStart(), "utf-8");
-  }
-
-  return root;
+  return tmpProject("tui-context", files);
 }
 
 function authFixture(extra: Record<string, string> = {}): string {
@@ -212,5 +202,59 @@ describe("/context TUI output", () => {
       ["No endpoints found"],
     );
     assert.equal(lines[0].tone, "yellow");
+  });
+});
+
+describe("/context filter", () => {
+  it("shows a single endpoint with the filter line", () => {
+    const result = handleParsed(authFixture(), parseSlashInput("/context GET /api/auth/profile"));
+
+    assert.equal(result.action, "append");
+    assert.equal(result.lines[0].text, "Filter: GET /api/auth/profile — showing 1 of 2 endpoints");
+    assert.equal(result.lines[0].tone, "dim");
+
+    const text = result.lines.map((line) => line.text).join("\n");
+    assert.match(text, /Endpoints: 1/);
+    assert.match(text, /GET\s+\/api\/auth\/profile/);
+    assert.match(text, /✓ Controller:\s+profileController\.getProfile/);
+    assert.doesNotMatch(text, /\/api\/auth\/login/);
+  });
+
+  it("filters by path only (all methods on that path)", () => {
+    const text = handleParsed(authFixture(), parseSlashInput("/context /api/auth/login"))
+      .lines.map((line) => line.text)
+      .join("\n");
+
+    assert.match(text, /Filter: \/api\/auth\/login — showing 1 of 2 endpoints/);
+    assert.match(text, /POST\s+\/api\/auth\/login/);
+    assert.doesNotMatch(text, /\/api\/auth\/profile/);
+  });
+
+  it("matches a concrete id against a :param template", () => {
+    const root = authFixture({
+      "src/routes/auth.js": `
+        import express from "express";
+        import { profileController } from "../controllers/profileController.js";
+        const router = express.Router();
+        router.get("/profile/:userId", auth, profileController.getProfile);
+        export default router;
+      `,
+    });
+
+    const text = handleParsed(root, parseSlashInput("/context GET /api/auth/profile/user-9"))
+      .lines.map((line) => line.text)
+      .join("\n");
+
+    assert.match(text, /Filter: GET \/api\/auth\/profile\/user-9/);
+    assert.match(text, /GET\s+\/api\/auth\/profile\/:userId/);
+  });
+
+  it("answers no-match with the available targets", () => {
+    const text = handleParsed(authFixture(), parseSlashInput("/context GET /api/nope"))
+      .lines.map((line) => line.text)
+      .join("\n");
+
+    assert.match(text, /No endpoint matches GET \/api\/nope\./);
+    assert.match(text, /Available GET: GET \/api\/auth\/profile/);
   });
 });

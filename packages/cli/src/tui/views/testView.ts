@@ -46,13 +46,13 @@ export function toTestLines(session: TestSession): OutputLine[] {
     });
     if (result.payload) {
       lines.push({ text: "", tone: "default" });
-      lines.push({ text: "Payload:", tone: "dim" });
+      lines.push({ text: "Payload:", tone: "default" });
       const preview = jsonPreview(result.payload, 6);
       for (const line of preview) lines.push({ text: line, tone: "dim" });
     }
     if (result.responsePreview !== undefined) {
       lines.push({ text: "", tone: "default" });
-      lines.push({ text: "Response:", tone: "dim" });
+      lines.push({ text: "Response:", tone: "default" });
       const preview = String(result.responsePreview).split("\n").slice(0, 8);
       for (const line of preview) lines.push({ text: line, tone: "dim" });
       if (String(result.responsePreview).split("\n").length > 8) {

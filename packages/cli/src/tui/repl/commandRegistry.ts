@@ -12,15 +12,15 @@ export interface SlashCommand {
 
 export const SLASH_COMMANDS: SlashCommand[] = [
   { name: "scan", description: "Scan backend project dan menemukan route/API.", usage: "/scan", status: "ready" },
-  { name: "schema", description: "Extract validation schemas.", usage: "/schema", status: "ready" },
-  { name: "context", description: "Peta endpoint ke controller, service, dan model.", usage: "/context", status: "ready" },
+  { name: "schema", description: "Extract validation schemas.", usage: "/schema [METHOD] [PATH]", status: "ready" },
+  { name: "context", description: "Peta endpoint ke controller, service, dan model.", usage: "/context [METHOD] [PATH]", status: "ready" },
   {
     name: "test",
     description: "Menjalankan testing/request flow terhadap endpoint (method wajib).",
     usage: "/test <METHOD> [PATH]",
     status: "ready",
   },
-  { name: "report", description: "Menampilkan atau membuka testing report.", usage: "/report", status: "soon" },
+  { name: "report", description: "Publish cached test results and print the session report link.", usage: "/report [METHOD] [PATH]", status: "ready" },
   { name: "config", description: "Konfigurasi SonicPoint.", usage: "/config", status: "ready" },
   { name: "clear", description: "Membersihkan terminal.", usage: "/clear", status: "ready" },
   { name: "quit", description: "Keluar dari SonicPoint.", usage: "/quit", status: "ready" },

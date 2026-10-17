@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
 
@@ -25,6 +24,7 @@ import {
   maskValue,
   toConfigFlowLines,
 } from "../src/tui/views/configView.js";
+import { tmpDir } from "./helpers/project.js";
 
 function draft(overrides: Partial<ConfigDraft> = {}): ConfigDraft {
   return {
@@ -195,7 +195,7 @@ describe("unified flow list (no counters, no hints)", () => {
 
 describe("config save round-trip (file only, no network)", () => {
   it("writes .sonic-point.json readable by loadCredentials", () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), "sp-tui-config-"));
+    const root = tmpDir("tui-config");
     const creds = draftToCredentials(draft());
     saveCredentials(root, creds);
     const loaded = loadCredentials(root);

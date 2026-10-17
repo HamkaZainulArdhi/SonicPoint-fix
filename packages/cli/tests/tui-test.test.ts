@@ -1,74 +1,68 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
-import http from "node:http";
-import os from "node:os";
-import path from "node:path";
 import { describe, it } from "node:test";
 
 import { saveCredentials } from "../src/config/app.js";
-import { runTest } from "../src/tui/repl/dispatchCommands.js";
+import { SessionStore } from "../src/config/sessions.js";
+import { runReport, runTest } from "../src/tui/repl/dispatchCommands.js";
 import {
   concreteParamsForTemplate,
   parseTestArgs,
 } from "../src/tui/repl/testArgs.js";
 import { toTestLines } from "../src/tui/views/testView.js";
 import { TestSession } from "../src/domain/session.js";
+import { tmpDir, tmpProject } from "./helpers/project.js";
+import { hits, startServer } from "./helpers/server.js";
+import {
+  credentials,
+  executedResult,
+  sampleSession,
+  skippedResult,
+} from "./helpers/fixtures.js";
 
 function fixture(): string {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "sp-tui-test-"));
-  fs.mkdirSync(path.join(root, "src", "routes"), { recursive: true });
-  fs.writeFileSync(
-    path.join(root, "src", "app.js"),
-    `
-    import express from "express";
-    import itemRoutes from "./routes/itemRoutes.js";
-    const app = express();
-    app.use("/api/items", itemRoutes);
-    export default app;
-    `.trimStart(),
-  );
-  fs.writeFileSync(
-    path.join(root, "src", "routes", "itemRoutes.js"),
-    `
-    import express from "express";
-    const router = express.Router();
-    router.get("/", async () => {});
-    router.get("/:itemId", async () => {});
-    router.post("/", async () => {});
-    export default router;
-    `.trimStart(),
-  );
-  return root;
+  return tmpProject("tui-test", {
+    "src/app.js": `
+      import express from "express";
+      import itemRoutes from "./routes/itemRoutes.js";
+      const app = express();
+      app.use("/api/items", itemRoutes);
+      export default app;
+    `,
+    "src/routes/itemRoutes.js": `
+      import express from "express";
+      const router = express.Router();
+      router.get("/", async () => {});
+      router.get("/:itemId", async () => {});
+      router.post("/", async () => {});
+      export default router;
+    `,
+  });
 }
 
-function credentials(baseUrl: string) {
-  return {
-    baseUrl,
-    loginEndpoint: "/api/auth/login",
-    email: "admin@example.com",
-    password: "admin123",
-    tokenField: "data.token",
-    token: "preset-token",
-  };
+function session(): TestSession {
+  return sampleSession({
+    results: [
+      executedResult({ order: 1, latencyMs: 12 }),
+      executedResult({
+        order: 2,
+        method: "POST",
+        statusCode: 500,
+        success: false,
+        latencyMs: 30,
+        error: "boom",
+      }),
+      skippedResult({
+        order: 3,
+        method: "GET",
+        path: "/api/items/:itemId",
+        resolvedPath: "/api/items/:itemId",
+        reason: "Dynamic parameter could not be resolved for /api/items/:itemId.",
+      }),
+    ],
+  });
 }
 
-function listen(handler: (req: http.IncomingMessage, res: http.ServerResponse) => void) {
-  const server = http.createServer(handler);
-  return {
-    server,
-    async port(): Promise<number> {
-      await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-      return (server.address() as { port: number }).port;
-    },
-    async close(): Promise<void> {
-      await new Promise<void>((resolve, reject) =>
-        server.close((error) => (error ? reject(error) : resolve())),
-      );
-    },
-  };
-}
-
-describe("parseTestArgs (strict, method wajib)", () => {
+describe("parseTestArgs (strict, method required)", () => {
   it("rejects bare /test", () => {
     const parsed = parseTestArgs([]);
     assert.equal(parsed.ok, false);
@@ -102,9 +96,9 @@ describe("parseTestArgs (strict, method wajib)", () => {
   });
 
   it("accepts a single endpoint and normalizes trailing slashes", () => {
-    const parsed = parseTestArgs(["post", "/api/v1/lahan/"]);
+    const parsed = parseTestArgs(["post", "/api/items/"]);
     assert.equal(parsed.ok, true);
-    if (parsed.ok) assert.deepEqual(parsed.filter, { kind: "single", method: "POST", path: "/api/v1/lahan" });
+    if (parsed.ok) assert.deepEqual(parsed.filter, { kind: "single", method: "POST", path: "/api/items" });
   });
 
   it("rejects paths without a leading slash and too many args", () => {
@@ -132,52 +126,6 @@ describe("concreteParamsForTemplate", () => {
 });
 
 describe("toTestLines", () => {
-  function session(): TestSession {
-    return {
-      project: { slug: "demo", name: "demo" },
-      startedAt: new Date(0).toISOString(),
-      finishedAt: new Date(0).toISOString(),
-      results: [
-        {
-          kind: "executed",
-          order: 1,
-          method: "GET",
-          path: "/api/items",
-          resolvedPath: "/api/items",
-          statusCode: 200,
-          success: true,
-          latencyMs: 12,
-          auth: "bearer",
-          aiGenerated: false,
-          testedAt: new Date(0).toISOString(),
-        },
-        {
-          kind: "executed",
-          order: 2,
-          method: "POST",
-          path: "/api/items",
-          resolvedPath: "/api/items",
-          statusCode: 500,
-          success: false,
-          latencyMs: 30,
-          auth: "bearer",
-          aiGenerated: false,
-          testedAt: new Date(0).toISOString(),
-          error: "boom",
-        },
-        {
-          kind: "skipped",
-          order: 3,
-          method: "GET",
-          path: "/api/items/:itemId",
-          resolvedPath: "/api/items/:itemId",
-          reason: "Dynamic parameter could not be resolved for /api/items/:itemId.",
-          testedAt: new Date(0).toISOString(),
-        },
-      ],
-    };
-  }
-
   it("renders summary + per-result tones", () => {
     const lines = toTestLines(session());
     const byText = new Map(lines.map((line) => [line.text, line.tone]));
@@ -197,7 +145,7 @@ describe("toTestLines", () => {
   });
 
   it("prints an empty-state line when there are no results", () => {
-    const lines = toTestLines({ ...session(), results: [] });
+    const lines = toTestLines(sampleSession({ results: [] }));
     assert.deepEqual(
       lines.map((line) => line.text),
       ["No endpoints found."],
@@ -206,51 +154,35 @@ describe("toTestLines", () => {
   });
 
   it("drops the template line even when path differs from resolvedPath", () => {
-    const lines = toTestLines({
-      ...session(),
-      results: [
-        {
-          kind: "executed",
-          order: 1,
-          method: "GET",
-          path: "/api/lahan/:lahanId",
-          resolvedPath: "/api/lahan/0f50625c-ced6-4aa9-9931-551cdfa4b63f",
-          statusCode: 200,
-          success: true,
-          latencyMs: 8,
-          auth: "bearer",
-          aiGenerated: false,
-          testedAt: new Date(0).toISOString(),
-        },
-      ],
-    });
+    const lines = toTestLines(
+      sampleSession({
+        results: [
+          executedResult({
+            resolvedPath: "/api/items/0f50625c-ced6-4aa9-9931-551cdfa4b63f",
+          }),
+        ],
+      }),
+    );
     const text = lines.map((line) => line.text).join("\n");
     assert.doesNotMatch(text, /template:/);
-    assert.match(text, /\/api\/lahan\/0f50625c-ced6-4aa9-9931-551cdfa4b63f/);
+    assert.match(text, /\/api\/items\/0f50625c-ced6-4aa9-9931-551cdfa4b63f/);
   });
 
   it("renders payload and response as labeled blocks with breaks", () => {
     const body = ["{", '  "success": true,', '  "message": "ok",', '  "data": {', '    "id": "1",', "  },", '  "extra": 1,', '  "more": 2,', '  "tail": 3', "}"].join("\n");
-    const lines = toTestLines({
-      ...session(),
-      results: [
-        {
-          kind: "executed",
-          order: 1,
-          method: "POST",
-          path: "/api/items",
-          resolvedPath: "/api/items",
-          statusCode: 201,
-          success: true,
-          latencyMs: 91,
-          auth: "bearer",
-          aiGenerated: false,
-          testedAt: new Date(0).toISOString(),
-          payload: { a: 1 },
-          responsePreview: body,
-        },
-      ],
-    });
+    const lines = toTestLines(
+      sampleSession({
+        results: [
+          executedResult({
+            method: "POST",
+            statusCode: 201,
+            latencyMs: 91,
+            payload: { a: 1 },
+            responsePreview: body,
+          }),
+        ],
+      }),
+    );
     const texts = lines.map((line) => line.text);
     // Block labels appear exactly once each.
     assert.equal(texts.filter((t) => t === "Payload:").length, 1);
@@ -280,73 +212,105 @@ describe("runTest AUTH gate", () => {
 describe("runTest e2e (local http)", () => {
   it("runs bulk GET: collection sampled for the :itemId endpoint", async () => {
     const root = fixture();
-    const seen: string[] = [];
-    const { server, port: getPort, close } = listen((req, res) => {
-      seen.push(`${req.method} ${req.url}`);
-      res.writeHead(200, { "Content-Type": "application/json" });
-      if (req.url === "/") return res.end(JSON.stringify({ ok: true }));
-      if (req.url === "/api/items/") return res.end(JSON.stringify({ data: [{ id: "item-1" }] }));
-      return res.end(JSON.stringify({ data: { id: "item-1" } }));
+    const server = await startServer((request) => {
+      if (request.url === "/api/items/") return { body: { data: [{ id: "item-1" }] } };
+      return { body: { data: { id: "item-1" } } };
     });
+
     try {
-      const port = await getPort();
-      saveCredentials(root, credentials(`http://127.0.0.1:${port}`));
+      saveCredentials(root, credentials(server.url, true));
       const lines = await runTest(root, ["GET"]);
       const text = lines.map((line) => line.text).join("\n");
       assert.match(text, /2 passed/);
-      assert.ok(seen.includes("GET /api/items/item-1"), `seen: ${seen.join(", ")}`);
+      assert.equal(hits(server, "GET", "/api/items/item-1").length, 1);
       assert.doesNotMatch(text, /preset-token|admin123|Authorization:/i);
     } finally {
-      await close();
+      await server.close();
     }
   });
 
   it("skips the :itemId endpoint honestly when nothing can be sampled", async () => {
     const root = fixture();
-    const { server, port: getPort, close } = listen((req, res) => {
-      res.writeHead(200, { "Content-Type": "application/json" });
-      if (req.url === "/") return res.end(JSON.stringify({ ok: true }));
-      return res.end(JSON.stringify({ data: [] }));
-    });
+    const server = await startServer(() => ({ body: { data: [] } }));
+
     try {
-      const port = await getPort();
-      saveCredentials(root, credentials(`http://127.0.0.1:${port}`));
+      saveCredentials(root, credentials(server.url, true));
       const lines = await runTest(root, ["GET"]);
       const text = lines.map((line) => line.text).join("\n");
       assert.match(text, /1 skipped/);
       assert.match(text, /concrete id/);
     } finally {
-      await close();
+      await server.close();
     }
   });
 
   it("runs a single endpoint by concrete id without sampling", async () => {
     const root = fixture();
-    const seen: string[] = [];
-    const { server, port: getPort, close } = listen((req, res) => {
-      seen.push(`${req.method} ${req.url}`);
-      res.writeHead(200, { "Content-Type": "application/json" });
-      if (req.url === "/") return res.end(JSON.stringify({ ok: true }));
-      return res.end(JSON.stringify({ data: { id: "item-42" } }));
-    });
+    const server = await startServer(() => ({ body: { data: { id: "item-42" } } }));
+
     try {
-      const port = await getPort();
-      saveCredentials(root, credentials(`http://127.0.0.1:${port}`));
+      saveCredentials(root, credentials(server.url, true));
       const lines = await runTest(root, ["GET", "/api/items/item-42"]);
       const text = lines.map((line) => line.text).join("\n");
       assert.match(text, /1 passed/);
-      assert.ok(seen.includes("GET /api/items/item-42"), `seen: ${seen.join(", ")}`);
-      assert.ok(!seen.includes("GET /api/items/"));
+      assert.equal(hits(server, "GET", "/api/items/item-42").length, 1);
+      assert.equal(hits(server, "GET", "/api/items").length, 0, "no collection sampling for a concrete id");
     } finally {
-      await close();
+      await server.close();
     }
   });
 
   it("reports unknown endpoints with available targets", async () => {
     const root = fixture();
-    saveCredentials(root, credentials("http://127.0.0.1:1"));
+    saveCredentials(root, credentials("http://127.0.0.1:1", true));
     const lines = await runTest(root, ["POST", "/api/nope"]);
     const text = lines.map((line) => line.text).join("\n");
     assert.match(text, /Endpoint not found/);
+  });
+});
+
+describe("runReport (in-TUI publish)", () => {
+  it("asks to run /test first when nothing is cached", async () => {
+    const root = tmpDir("tui-report");
+    const lines = await runReport(root, []);
+    assert.match(lines.map((line) => line.text).join("\n"), /No cached session/);
+    assert.equal(lines[0].tone, "red");
+  });
+
+  it("publishes via the platform and prints the report link", async () => {
+    const root = tmpDir("tui-report");
+    new SessionStore(root).save(sampleSession());
+    const fakeFetch = (async () => ({
+      ok: true,
+      json: async () => ({
+        status: "published",
+        receipt: { sessionId: "s1", published: 1, reportUrl: "https://sonicpoint.vercel.app/report/s1" },
+      }),
+    })) as unknown as typeof fetch;
+    const lines = await runReport(root, [], { fetchImpl: fakeFetch });
+    const text = lines.map((line) => line.text).join("\n");
+    assert.match(text, /Published 1 endpoints/);
+    assert.match(text, /sonicpoint\.vercel\.app\/report\/s1/);
+  });
+
+  it("forwards method+path filters and rejects bad args without network", async () => {
+    const root = tmpDir("tui-report");
+    new SessionStore(root).save(sampleSession());
+    let seenBody = "";
+    const fakeFetch = (async (_url: string, init?: { body?: string }) => {
+      seenBody = String(init?.body ?? "");
+      return { ok: true, json: async () => ({ status: "skipped", reason: "nothing matched" }) };
+    }) as unknown as typeof fetch;
+    await runReport(root, ["GET", "/api/items"], { fetchImpl: fakeFetch });
+    assert.match(seenBody, /"method":"GET"/);
+    assert.match(seenBody, /"path":"\/api\/items"/);
+
+    const noNetwork = (async (): Promise<never> => {
+      throw new Error("must not hit network on bad args");
+    }) as unknown as typeof fetch;
+    const bad = await runReport(root, ["FOO"], { fetchImpl: noNetwork });
+    assert.match(bad.map((line) => line.text).join("\n"), /Unknown \/report filter/);
+    const many = await runReport(root, ["GET", "/a", "/b"], { fetchImpl: noNetwork });
+    assert.match(many.map((line) => line.text).join("\n"), /Too many arguments/);
   });
 });

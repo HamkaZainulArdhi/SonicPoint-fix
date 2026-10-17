@@ -17,11 +17,11 @@ export type TestArgsOk = { ok: true; filter: TestFilter; concreteParams: Map<str
 export type TestArgsError = { ok: false; error: string; hint: string };
 
 const USAGE = "Usage: /test <METHOD> [PATH]";
-const EXAMPLES = "Examples: /test GET  ·  /test POST /api/v1/lahan  ·  /test GET /api/items/:itemId";
+const EXAMPLES = "Examples: /test GET  ·  /test POST /api/items  ·  /test GET /api/items/:itemId";
 const METHODS_HINT = `Available methods: ${VALID_METHODS.join(" ")}`;
 
 function hintForSingle(method: ValidMethod): string {
-  return `Example: /test ${method} /api/v1/lahan`;
+  return `Example: /test ${method} /api/items`;
 }
 
 export function parseTestArgs(args: string[]): TestArgsOk | TestArgsError {

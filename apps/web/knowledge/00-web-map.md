@@ -31,4 +31,4 @@ Lihat data layer: [[02-components-queries]]. Config: [[03-config-decisions-todo]
 ## AI guide
 
 - Ubah tampilan → components saja. Ubah data → `lib/queries.ts` + kontrak Root.
-- Jangan tambah write / Route Handler / server secret.
+- Route Handler yang ada (`app/api/ai/payload`, `app/api/report`) **server-only gerbang secret** (ADR-09 Root) — bukan API data, bukan untuk FE. Jangan tambah write dari sisi Web: FE tetap read-only via anon key (ADR-02).

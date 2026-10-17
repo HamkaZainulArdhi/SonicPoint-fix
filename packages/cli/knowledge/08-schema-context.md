@@ -20,7 +20,7 @@ source:
 
 # Schema & Context — riwayat penerapan & fix (sesi Okt 2026)
 
-> Detail format TUI terkini ada di [[07-tui-repl]]; keputusan arsitektur di [[05-decisions-todo]] (C-ADR-08, C-ADR-12). File ini hanya mencatat **apa yang dibangun, apa yang diperbaiki, dan jebakan yang terbukti** — bukan transkrip.
+> Detail format TUI terkini ada di [[07-tui-repl]]; keputusan arsitektur di [[05-decisions-todo]] (C-ADR-08, C-ADR-12, C-ADR-21). File ini hanya mencatat **apa yang dibangun, apa yang diperbaiki, dan jebakan yang terbukti** — bukan transkrip.
 
 ## Titik awal
 
@@ -50,13 +50,23 @@ Core scan (`routes/schemas/apiGraph/knowledge/symbols`, lihat [[01-scan]]) **sud
   - `cycleB.step` terklasifikasi **model** `Step`, bukan service — heuristik `inferModel` hanya anggap `*Service` (dkk) sebagai service. Fix test: pakai `aService`/`bService`. Batasan ini dicatat permanen di Root [[05-constraints]] C-08.
 - Verifikasi akhir sesi: `typecheck` + `build` bersih, **52/52 test hijau**, e2e `scan --schema` + `scan --context` via `dist/` sesuai format.
 
+## Filter `[METHOD] [PATH]` (lanjutan sesi Okt 2026)
+
+1. **`/schema` & `/context` bisa spesifik ke satu method + endpoint** (request user): `/schema post /api/laporan`, `/schema POST`, `/context /api/laporan`, `/context GET /api/laporan/6775…` (cocok ke template `:param`).
+2. **Parser + matcher murni baru**: `tui/repl/filterArgs.ts` (`parseFilterArgs(args, label)` + `matchesQuery` + `describeQuery`); `/report` kini delegasi ke parser yang sama — pesan error identik, tes report tak berubah. `samePath`/`templateMatches` diangkat dari `dispatchCommands.ts` (satu sumber).
+3. **Output**: saat filter aktif, baris pertama dim `Filter: … — showing N of M body endpoints|endpoints`; tanpa argumen **byte-identik** dengan sebelumnya (tanpa baris filter). Header `/schema` kini plural-aware (`✔ Found 1 body endpoint`).
+4. **No-match jujur bergaya `/test`**: `No endpoint matches …` (red) + `Available …` (dim, max 5); method tanpa kandidat fallback ke daftar visible (`/schema GET …` = no-match biasa, bukan pesan pintar — keputusan user).
+5. **`/context` filtered**: `Endpoints:` mengikuti hasil filter; `Nodes/Edges/Unresolved` tetap global (bukan subgraph — dijelaskan baris filter).
+6. **Test baru**: `repl.test.ts` +5 (parser/matcher/describe), `tui-schema.test.ts` +4, `tui-context.test.ts` +4 → **130/130 hijau**; typecheck + build bersih. Keputusan: C-ADR-21.
+
 ## Kontrak format (ringkas)
 
-- `/schema`: header green `✔ Found N body endpoints`; endpoint default (`METHOD` padEnd 7); divider dim; `Schema:` cyan / `unknown` yellow; `Required:` + `✓` green vs `Optional:` + `◯` dim; nama field padEnd per-schema; `type [enum, constraints, formats]` format core.
-- `/context`: header green 4 baris sejajar (`Endpoints/Nodes/Edges/Unresolved`); endpoint default, gap yellow full-line + `[missing: …]`; divider dim; detail `✓` green vs `◯` dim (`none`/`not detected`); label padEnd 12.
+- `/schema`: header green `✔ Found N body endpoint(s)` (plural-aware); endpoint default (`METHOD` padEnd 7); divider dim; `Schema:` cyan / `unknown` yellow; `Required:` + `✓` green vs `Optional:` + `◯` dim; nama field padEnd per-schema; `type [enum, constraints, formats]` format core. Filter aktif → baris dim `Filter: … — showing N of M body endpoints` di atas header.
+- `/context`: header green 4 baris sejajar (`Endpoints/Nodes/Edges/Unresolved`); endpoint default, gap yellow full-line + `[missing: …]`; divider dim; detail `✓` green vs `◯` dim (`none`/`not detected`); label padEnd 12. Filter aktif → baris dim `Filter: … — showing N of M endpoints`; `Endpoints:` = hasil filter, sisanya global.
 
 ## Sisa / belum pasti
 
+- Parity command-mode: `scan --schema` / `scan --context` belum menerima argumen filter `[METHOD] [PATH]` (C-ADR-21; TUI dulu).
 - Cek visual TTY sungguhan (Windows Terminal) untuk styling `/context` — automated test tak cover render Ink.
 - Asumsi glyph `✓/◯` 1-cell diwarisi dari bukti `/schema`; aman sejauh ini.
 - Sisa wiring REPL: `/test /report /config` (pola tinggal diulang).

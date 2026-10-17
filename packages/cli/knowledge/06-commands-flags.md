@@ -34,6 +34,9 @@ sonic-point scan [--schema | --context | --snippets]
 > [!warning] Prioritas flag (bukan kombinasi)
 > `commands.ts:33-52` cek berurutan: `context` → `snippets` → `schema` → default. Kalau gabung flag, yang menang yang paling atas. Contoh: `scan --context --schema` = mode context saja.
 
+> [!note] Filter hanya di REPL
+> `/schema` + `/context` versi REPL menerima `[METHOD] [PATH]` (C-ADR-21); command-mode `scan --schema / --context` belum — parity menyusul.
+
 ## `schema` — ekstrak skema validasi
 
 ```
@@ -70,7 +73,7 @@ sonic-point send [endpoint] [--method <method>]
 | `send --method POST /api/items` | method + path eksplisit, match `METHOD + normalized path` (strip trailing `/`) | Satu endpoint |
 | `send --method POST` | error `An endpoint target is required with --method.` + hint | `fail()` |
 
-Setelah seleksi: load/ask+save credentials → `resolveGeminiKey()` (null = warning box + fallback deterministik, bukan error) → `runSession(..., events: ora spinner payloadStart/Done)` → `renderSession()` (tabel `cli-table3` + detail request/response). Lihat [[02-run]].
+Setelah seleksi: load/ask+save credentials → `resolveGeminiKey()` (null = warning box + fallback deterministik, bukan error) → `runSession(..., events: ora spinner payloadStart/Done)` → `renderRefNotices()` (baris dim `↳ refs.lahan = <id> (saved)` kalau ada FK baru di-cache) → `renderSession()` (tabel `cli-table3` + detail request/response). Lihat [[02-run]].
 
 ## `/test` (REPL) — uji endpoint, method wajib
 
@@ -91,6 +94,23 @@ Bedanya dengan `send` (SENGAJA, lihat C-ADR-15/16 di [[05-decisions-todo]]):
 | tanpa kredensial | hard-block `Run /config first` | prompt `askCredentials` |
 
 Prasyarat: `.sonic-point.json` sudah ada (via `/config` atau `init`). Bulk `GET` di-sort statis-dulu agar sampling `:param` dapat data. Hasil auto-tersimpan ke `session-cache.json` (siap `/report`). Satu run dalam satu waktu (`isRunning` guard). Lihat [[07-tui-repl]].
+
+## `/schema` & `/context` (REPL) — view + filter opsional
+
+```
+/schema  [METHOD] [PATH]
+/context [METHOD] [PATH]
+```
+
+| Bentuk | Hasil |
+|---|---|
+| tanpa argumen | semua endpoint (identik dengan command-mode) |
+| `/schema POST` · `/context GET` | hanya method itu |
+| `/context /api/laporan` | semua method di path itu |
+| `/schema post /api/laporan` | 1 endpoint (method + path) |
+| `/context GET /api/laporan/6775…` | cocok juga ke template `/api/laporan/:id` |
+
+Matching case-insensitive + trailing slash dinormalisasi. Filter aktif → baris dim `Filter: … — showing N of M`; tanpa match → `No endpoint matches …` + `Available …` (max 5). `/schema` hanya body endpoint (POST/PUT/PATCH) — `/schema GET …` = no-match biasa. Parser bersama dengan `/report`: `tui/repl/filterArgs.ts` (C-ADR-21 di [[05-decisions-todo]]).
 
 ## `/config` (REPL) — konfigurasi target, gantikan `inquirer`
 

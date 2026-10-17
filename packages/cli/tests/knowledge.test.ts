@@ -1,38 +1,24 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
 import { describe, it } from "node:test";
 
 import { buildKnowledgeGraph } from "../src/scan/knowledge/buildKnowledge.js";
-
-function fixture(files: Record<string, string>): string {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "sp-knowledge-"));
-
-  for (const [relative, content] of Object.entries(files)) {
-    const full = path.join(root, relative);
-    fs.mkdirSync(path.dirname(full), { recursive: true });
-    fs.writeFileSync(full, content.trimStart(), "utf-8");
-  }
-
-  return root;
-}
+import { tmpProject } from "./helpers/project.js";
 
 const RESOLVED = {
   "src/app.js": `
     import express from "express";
-    import lahanRoutes from "./routes/lahanRoutes.js";
+    import itemRoutes from "./routes/itemRoutes.js";
     const app = express();
-    app.use("/api/lahan", lahanRoutes);
+    app.use("/api/items", itemRoutes);
     export default app;
   `,
-  "src/routes/lahanRoutes.js": `
+  "src/routes/itemRoutes.js": `
     import express from "express";
     import { validate } from "../middleware/validate.js";
-    import { createLahanSchema } from "../validations/lahanSchema.js";
-    import { lahanController } from "../controllers/lahanController.js";
+    import { createItemSchema } from "../validations/itemSchema.js";
+    import { itemController } from "../controllers/itemController.js";
     const router = express.Router();
-    router.post("/create", validate(createLahanSchema), lahanController.createLahan);
+    router.post("/create", validate(createItemSchema), itemController.createItem);
     export default router;
   `,
   "src/middleware/validate.js": `
@@ -40,28 +26,28 @@ const RESOLVED = {
       return (req, res, next) => next();
     }
   `,
-  "src/validations/lahanSchema.js": `
+  "src/validations/itemSchema.js": `
     import Joi from "joi";
-    export const createLahanSchema = Joi.object({ name: Joi.string().required() });
+    export const createItemSchema = Joi.object({ name: Joi.string().required() });
   `,
-  "src/controllers/lahanController.js": `
-    import { lahanService } from "../services/lahanService.js";
-    export const lahanController = {
-      createLahan: async (req, res) => {
-        return lahanService.create(req.body);
+  "src/controllers/itemController.js": `
+    import { itemService } from "../services/itemService.js";
+    export const itemController = {
+      createItem: async (req, res) => {
+        return itemService.create(req.body);
       },
     };
   `,
-  "src/services/lahanService.js": `
-    import { Lahan } from "../models/Lahan.js";
-    export const lahanService = {
+  "src/services/itemService.js": `
+    import { Item } from "../models/Item.js";
+    export const itemService = {
       create: async (payload) => {
-        return Lahan.create(payload);
+        return Item.create(payload);
       },
     };
   `,
-  "src/models/Lahan.js": `
-    export const Lahan = {
+  "src/models/Item.js": `
+    export const Item = {
       create(payload) {
         return payload;
       },
@@ -71,18 +57,18 @@ const RESOLVED = {
 
 describe("buildKnowledgeGraph", () => {
   it("resolves the full controller → service → model chain", () => {
-    const graph = buildKnowledgeGraph(fixture(RESOLVED));
-    const endpoint = graph.endpoints.find((e) => e.endpoint === "/api/lahan/create");
+    const graph = buildKnowledgeGraph(tmpProject("knowledge", RESOLVED));
+    const endpoint = graph.endpoints.find((e) => e.endpoint === "/api/items/create");
 
-    assert.equal(endpoint?.schema, "createLahanSchema");
-    assert.equal(endpoint?.controller, "lahanController.createLahan");
-    assert.ok(endpoint?.service.includes("lahanService.create"));
-    assert.ok(endpoint?.model.includes("Lahan"));
+    assert.equal(endpoint?.schema, "createItemSchema");
+    assert.equal(endpoint?.controller, "itemController.createItem");
+    assert.ok(endpoint?.service.includes("itemService.create"));
+    assert.ok(endpoint?.model.includes("Item"));
     assert.equal(graph.unresolvedCount, 0);
   });
 
   it("records gaps when the chain is partial", () => {
-    const root = fixture({
+    const root = tmpProject("knowledge", {
       "src/app.js": `
         import express from "express";
         import sensorRoutes from "./routes/sensorRoutes.js";

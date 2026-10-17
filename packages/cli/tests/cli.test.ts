@@ -1,39 +1,31 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 
 import { selectTargets } from "../src/cli/selection.js";
+import { tmpProject } from "./helpers/project.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, "..");
 
 function fixture(): string {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "sp-cli-"));
-  fs.mkdirSync(path.join(root, "src", "routes"), { recursive: true });
-  fs.writeFileSync(
-    path.join(root, "src", "app.js"),
-    `
-    import express from "express";
-    import r from "./routes/r.js";
-    const app = express();
-    app.use("/api/items", r);
-    export default app;
-    `.trimStart(),
-  );
-  fs.writeFileSync(
-    path.join(root, "src", "routes", "r.js"),
-    `
-    import express from "express";
-    const router = express.Router();
-    router.get("/", async () => {});
-    export default router;
-    `.trimStart(),
-  );
-  return root;
+  return tmpProject("cli", {
+    "src/app.js": `
+      import express from "express";
+      import r from "./routes/r.js";
+      const app = express();
+      app.use("/api/items", r);
+      export default app;
+    `,
+    "src/routes/r.js": `
+      import express from "express";
+      const router = express.Router();
+      router.get("/", async () => {});
+      export default router;
+    `,
+  });
 }
 
 function runCli(root: string, args: string[]): Promise<{ code: number; output: string }> {

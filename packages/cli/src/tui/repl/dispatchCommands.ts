@@ -6,23 +6,37 @@ import { scanEndpoints } from "../../scan/routes/scanEndpoints.js";
 import { scanSchemas } from "../../scan/schemas/scanSchemas.js";
 import { buildApiGraph } from "../../scan/schemas/buildApiGraph.js";
 import { buildKnowledgeGraph } from "../../scan/knowledge/buildKnowledge.js";
+import { bodyEndpointNodes } from "../../scan/reports/formatSchema.js";
 import { ParsedInput, SLASH_COMMANDS } from "./commandRegistry.js";
 import { OutputLine } from "./transcript.js";
 import { groupEndpointsByFile } from "../views/scanView.js";
 import { toSchemaLines } from "../views/schemaView.js";
 import { toContextLines } from "../views/contextView.js";
 import { toTestLines } from "../views/testView.js";
+import { concreteParamsForTemplate, parseTestArgs } from "./testArgs.js";
 import {
-  concreteParamsForTemplate,
-  normalizePath,
-  parseTestArgs,
-} from "./testArgs.js";
+  describeQuery,
+  hasQuery,
+  matchesQuery,
+  parseFilterArgs,
+  samePath,
+  templateMatches,
+  EndpointQuery,
+  QueryableEndpoint,
+} from "./filterArgs.js";
 import { loadCredentials } from "../../config/app.js";
-import { resolveGeminiKey } from "../../config/providers.js";
+import { resolveGeminiKey, resolveSupabase } from "../../config/providers.js";
+import { resolvePlatformUrl } from "../../config/platform.js";
 import { SessionStore } from "../../config/sessions.js";
 import { GeminiClient } from "../../ai/client.js";
+import { RemoteAiClient } from "../../ai/remote.js";
+import { publishSession } from "../../report/publish.js";
+import { publishViaPlatform } from "../../report/remote.js";
+import { SupabaseReportStore } from "../../report/store.js";
+import { toReportLines } from "../views/reportView.js";
 import { Fetch } from "../../run/http.js";
-import { dynamicParams } from "../../run/params.js";
+import { dynamicParams } from "../../run/resources.js";
+import { refNotice } from "../../run/refs.js";
 import { RunError, runSession } from "../../run/runner.js";
 import { Endpoint } from "../../domain/endpoint.js";
 
@@ -66,9 +80,9 @@ function handleCommand(rootDir: string, name: string, args: string[]): HandlerRe
     case "scan":
       return { action: "append", lines: runScan(rootDir) };
     case "schema":
-      return { action: "append", lines: runSchema(rootDir) };
+      return { action: "append", lines: runSchema(rootDir, args) };
     case "context":
-      return { action: "append", lines: runContext(rootDir) };
+      return { action: "append", lines: runContext(rootDir, args) };
     case "test": {
       // Synchronous pre-check only (pure parser, no network). The real run
       // is async via runTest() — ReplApp drives that path. Direct callers of
@@ -94,6 +108,14 @@ function handleCommand(rootDir: string, name: string, args: string[]): HandlerRe
       return {
         action: "append",
         lines: [{ text: "Config flow runs in the REPL (6 steps, Esc cancels).", tone: "dim" }],
+      };
+    }
+    case "report": {
+      // Async publish via runReport() — ReplApp drives that path. Direct
+      // callers of handleParsed still get an honest answer either way.
+      return {
+        action: "append",
+        lines: [{ text: "Publishing… (use the REPL to run /report; this preview never hits the network)", tone: "dim" }],
       };
     }
     default:
@@ -181,32 +203,31 @@ export async function runTest(rootDir: string, args: string[], deps?: RunTestDep
 
   const needsAi = targets.some((t) => t.method === "POST" || t.method === "PUT" || t.method === "PATCH");
   const warnings: OutputLine[] = [];
-  if (needsAi) {
-    for (const w of resolveGeminiKey().warnings) warnings.push({ text: w, tone: "yellow" as const });
-    const geminiKey = resolveGeminiKey();
-    // Reuse the second call cost is negligible vs clarity; avoid divergent warnings.
-    if (!geminiKey.value) {
-      warnings.push(
-        { text: "Gemini provider credential not configured.", tone: "yellow" },
-        { text: "AI payload generation disabled — deterministic fallback will be used. Run /config to enable AI payloads.", tone: "dim" },
-      );
-    }
-  }
   const gemini = resolveGeminiKey();
+  if (needsAi) {
+    for (const w of gemini.warnings) warnings.push({ text: w, tone: "yellow" as const });
+  }
+  // AI dari platform BE — tanpa key lokal tetap jalan (fallback deterministik
+  // kalau platform tak terjangkau).
+  const ai = gemini.value ? new GeminiClient(gemini.value) : new RemoteAiClient(resolvePlatformUrl());
 
   try {
+    const refNotices: OutputLine[] = [];
     const session = await runSession(targets, {
       rootDir,
       allEndpoints: endpoints,
       credentials,
-      ai: gemini.value ? new GeminiClient(gemini.value) : null,
+      ai,
       // Never prompt inside the REPL — unresolvable :params become `skipped`.
       prompter: { askParam: async () => null },
       store: new SessionStore(rootDir),
       paramDefaults,
       fetchImpl: deps?.fetchImpl,
+      events: {
+        refSampled: (ref) => refNotices.push({ text: refNotice(ref), tone: "dim" }),
+      },
     });
-    return [...warnings, ...toTestLines(session)];
+    return [...warnings, ...refNotices, ...toTestLines(session)];
   } catch (error) {
     const raw = error instanceof RunError || error instanceof Error ? error.message : String(error);
     const prefix = raw.includes("Cannot reach login endpoint")
@@ -226,23 +247,54 @@ export async function runTest(rootDir: string, args: string[], deps?: RunTestDep
   }
 }
 
+export interface RunReportDeps {
+  fetchImpl?: typeof fetch;
+}
+
+/**
+ * Full /report flow — the REPL equivalent of `reportCommand` (commands.ts).
+ * Publishes the cached session (written by /test) via the platform BE,
+ * which stores passed, failed and skipped results for the summary cards.
+ * Falls back to direct Supabase only when the platform is unreachable
+ * and local credentials exist. Never throws — outcomes are transcript lines.
+ */
+export async function runReport(rootDir: string, args: string[], deps?: RunReportDeps): Promise<OutputLine[]> {
+  const session = new SessionStore(rootDir).load();
+
+  if (!session) {
+    return [
+      { text: "No cached session found. Run /test first.", tone: "red" },
+      { text: "Tip: /test GET runs all GET endpoints, /test POST /api/items runs one write.", tone: "dim" },
+    ];
+  }
+
+  const filter = parseFilterArgs(args, "report");
+  if (!filter.ok) {
+    return [
+      { text: filter.error, tone: "red" },
+      { text: filter.hint, tone: "dim" },
+    ];
+  }
+
+  const platformUrl = resolvePlatformUrl();
+  let outcome = await publishViaPlatform(session, platformUrl, filter.value, deps?.fetchImpl);
+
+  if (outcome.status === "failed" && /Cannot reach platform|Platform 5/.test(outcome.reason)) {
+    const supabase = resolveSupabase();
+    if (supabase.value) {
+      outcome = await publishSession(
+        session,
+        new SupabaseReportStore(supabase.value.url, supabase.value.key),
+        filter.value,
+      );
+    }
+  }
+
+  return toReportLines(outcome);
+}
+
 function hasParams(routePath: string): boolean {
   return dynamicParams(routePath).length > 0;
-}
-
-function samePath(left: string, right: string): boolean {
-  return normalizePath(left) === normalizePath(right);
-}
-
-function templateMatches(template: string, concretePath: string): boolean {
-  const tSegs = template.split("/").filter(Boolean);
-  const cSegs = concretePath.split("/").filter(Boolean);
-  if (tSegs.length !== cSegs.length) return false;
-  for (let i = 0; i < tSegs.length; i++) {
-    if (tSegs[i].startsWith(":")) continue;
-    if (tSegs[i] !== cSegs[i]) return false;
-  }
-  return true;
 }
 
 function findEndpoint(
@@ -310,9 +362,38 @@ function runScan(rootDir: string): OutputLine[] {
   return lines;
 }
 
-function runSchema(rootDir: string): OutputLine[] {
+function runSchema(rootDir: string, args: string[]): OutputLine[] {
+  const filter = parseFilterArgs(args, "schema");
+  if (!filter.ok) {
+    return [
+      { text: filter.error, tone: "red" },
+      { text: filter.hint, tone: "dim" },
+    ];
+  }
+
   try {
-    return toSchemaLines(buildApiGraph(rootDir));
+    const graph = buildApiGraph(rootDir);
+    const visible = bodyEndpointNodes(graph);
+
+    if (visible.length === 0 || !hasQuery(filter.value)) {
+      return toSchemaLines(graph);
+    }
+
+    const matches = visible.filter((node) => matchesQuery(node.endpoint, filter.value));
+    if (matches.length === 0) {
+      return noMatchLines(
+        filter.value,
+        visible.map((node) => node.endpoint),
+      );
+    }
+
+    return [
+      {
+        text: `Filter: ${describeQuery(filter.value)} — showing ${matches.length} of ${visible.length} body endpoints`,
+        tone: "dim",
+      },
+      ...toSchemaLines({ ...graph, endpoints: matches }),
+    ];
   } catch (error) {
     return [
       {
@@ -323,9 +404,40 @@ function runSchema(rootDir: string): OutputLine[] {
   }
 }
 
-function runContext(rootDir: string): OutputLine[] {
+function runContext(rootDir: string, args: string[]): OutputLine[] {
+  const filter = parseFilterArgs(args, "context");
+  if (!filter.ok) {
+    return [
+      { text: filter.error, tone: "red" },
+      { text: filter.hint, tone: "dim" },
+    ];
+  }
+
   try {
-    return toContextLines(buildKnowledgeGraph(rootDir));
+    const graph = buildKnowledgeGraph(rootDir);
+
+    if (graph.endpoints.length === 0 || !hasQuery(filter.value)) {
+      return toContextLines(graph);
+    }
+
+    const matches = graph.endpoints.filter((entry) =>
+      matchesQuery({ method: entry.method, path: entry.endpoint }, filter.value),
+    );
+
+    if (matches.length === 0) {
+      return noMatchLines(
+        filter.value,
+        graph.endpoints.map((entry) => ({ method: entry.method, path: entry.endpoint })),
+      );
+    }
+
+    return [
+      {
+        text: `Filter: ${describeQuery(filter.value)} — showing ${matches.length} of ${graph.endpoints.length} endpoints`,
+        tone: "dim",
+      },
+      ...toContextLines({ ...graph, endpoints: matches }),
+    ];
   } catch (error) {
     return [
       {
@@ -334,4 +446,24 @@ function runContext(rootDir: string): OutputLine[] {
       },
     ];
   }
+}
+
+/**
+ * Same honesty as /test: a filtered view never dead-ends without showing
+ * what IS available. Falls back to the whole visible set when the queried
+ * method has no candidates (e.g. `/schema GET` — body endpoints only).
+ */
+function noMatchLines(query: EndpointQuery, candidates: QueryableEndpoint[]): OutputLine[] {
+  const method = query.method?.toUpperCase();
+  const sameMethod = method ? candidates.filter((endpoint) => endpoint.method.toUpperCase() === method) : [];
+  const pool = sameMethod.length > 0 ? sameMethod : candidates;
+  const available = pool.slice(0, 5).map((endpoint) => `${endpoint.method.toUpperCase()} ${endpoint.path}`);
+
+  return [
+    { text: `No endpoint matches ${describeQuery(query)}.`, tone: "red" },
+    {
+      text: `${sameMethod.length > 0 && method ? `Available ${method}` : "Available"}: ${available.join(" · ")}`,
+      tone: "dim",
+    },
+  ];
 }

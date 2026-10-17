@@ -8,12 +8,20 @@ status: active
 source:
   - src/report/publish.ts
   - src/report/store.ts
+  - src/report/remote.ts
   - src/config/sessions.ts
+  - src/config/platform.ts
 ---
 
 # Report & Publish
 
 >Kontrak kolom canonical di `SonicPoint/knowledge/03-contracts.md` (Vault Root). Di sini hanya mapping fungsi → tabel.
+
+## Jalur publish
+
+1. **Default (tanpa key di CLI):** `publishViaPlatform(session, platformUrl, filter)` (`report/remote.ts`) → `POST {platform}/api/report {session, filter}`. Server yang pegang `service_role` (ADR-09 Root). Balikan diperlakukan sebagai `PublishOutcome` (`published` + `sessionId` + `reportUrl`).
+2. **Fallback (advanced):** kalau platform tak terjangkau / 5xx **dan** user punya key Supabase lokal → `publishSession(...)` menulis langsung via `SupabaseReportStore`.
+3. Semua hasil ikut terkirim: executed passed, executed failed (4xx/5xx/`ERROR` network), dan skipped — kartu summary report sudah punya empat angka.
 
 ## `publishSession(session, store|null, filter?)` (`publish.ts:16-47`)
 

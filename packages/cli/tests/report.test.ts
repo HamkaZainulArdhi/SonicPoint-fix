@@ -4,37 +4,13 @@ import { describe, it } from "node:test";
 import { TestSession } from "../src/domain/session.js";
 import { publishSession } from "../src/report/publish.js";
 import { ReportStore } from "../src/report/store.js";
+import { executedResult, sampleSession, skippedResult } from "./helpers/fixtures.js";
 
 function session(): TestSession {
-  return {
+  return sampleSession({
     project: { slug: "demo", name: "Demo" },
-    startedAt: "2026-01-01T00:00:00.000Z",
-    finishedAt: "2026-01-01T00:00:05.000Z",
-    results: [
-      {
-        kind: "executed",
-        order: 1,
-        method: "GET",
-        path: "/api/items/",
-        resolvedPath: "/api/items/",
-        statusCode: 200,
-        success: true,
-        latencyMs: 10,
-        auth: "bearer",
-        aiGenerated: false,
-        testedAt: "2026-01-01T00:00:01.000Z",
-      },
-      {
-        kind: "skipped",
-        order: 2,
-        method: "POST",
-        path: "/api/items/",
-        resolvedPath: "/api/items/",
-        reason: "No request payload could be generated.",
-        testedAt: "2026-01-01T00:00:02.000Z",
-      },
-    ],
-  };
+    results: [executedResult(), skippedResult()],
+  });
 }
 
 function mockStore(): ReportStore & { calls: string[]; rows?: unknown[] } {

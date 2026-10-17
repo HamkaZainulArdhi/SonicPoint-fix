@@ -1,7 +1,4 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
 import { describe, it } from "node:test";
 
 import {
@@ -11,38 +8,31 @@ import {
   suggestCommands,
 } from "../src/tui/repl/commandRegistry.js";
 import { handleParsed } from "../src/tui/repl/dispatchCommands.js";
+import { describeQuery, matchesQuery, parseFilterArgs } from "../src/tui/repl/filterArgs.js";
 import { MAX_TRANSCRIPT_ENTRIES, TranscriptEntry, capTranscript } from "../src/tui/repl/transcript.js";
+import { tmpProject } from "./helpers/project.js";
 
 function entry(id: number): TranscriptEntry {
   return { id, command: "/scan", lines: [] };
 }
 
 function scanFixture(): string {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "sp-repl-scan-"));
-  fs.mkdirSync(path.join(root, "src", "routes"), { recursive: true });
-  fs.writeFileSync(
-    path.join(root, "src", "app.js"),
-    `
-    import express from "express";
-    import r from "./routes/r.js";
-    const app = express();
-    app.use("/api/items", r);
-    export default app;
-    `.trimStart(),
-    "utf-8",
-  );
-  fs.writeFileSync(
-    path.join(root, "src", "routes", "r.js"),
-    `
-    import express from "express";
-    const router = express.Router();
-    router.get("/", async () => {});
-    router.post("/:id", async () => {});
-    export default router;
-    `.trimStart(),
-    "utf-8",
-  );
-  return root;
+  return tmpProject("repl", {
+    "src/app.js": `
+      import express from "express";
+      import r from "./routes/r.js";
+      const app = express();
+      app.use("/api/items", r);
+      export default app;
+    `,
+    "src/routes/r.js": `
+      import express from "express";
+      const router = express.Router();
+      router.get("/", async () => {});
+      router.post("/:id", async () => {});
+      export default router;
+    `,
+  });
 }
 
 describe("slash command registry", () => {
@@ -53,13 +43,14 @@ describe("slash command registry", () => {
     );
   });
 
-  it("marks only scan/schema/context/test/config/clear/quit as ready", () => {
+  it("marks scan/schema/context/test/report/config/clear/quit as ready", () => {
     for (const command of SLASH_COMMANDS) {
       const ready =
         command.name === "scan" ||
         command.name === "schema" ||
         command.name === "context" ||
         command.name === "test" ||
+        command.name === "report" ||
         command.name === "config" ||
         command.name === "clear" ||
         command.name === "quit";
@@ -95,6 +86,58 @@ describe("parseSlashInput", () => {
     if (unknown.kind === "unknown") {
       assert.equal(unknown.name, "nope");
     }
+  });
+});
+
+describe("parseFilterArgs (shared by /report, /schema, /context)", () => {
+  it("accepts every [METHOD] [PATH] shape", () => {
+    assert.deepEqual(parseFilterArgs([], "schema"), { ok: true, value: {} });
+    assert.deepEqual(parseFilterArgs(["post"], "schema"), { ok: true, value: { method: "POST" } });
+    assert.deepEqual(parseFilterArgs(["/api/items"], "schema"), { ok: true, value: { path: "/api/items" } });
+    assert.deepEqual(parseFilterArgs(["PATCH", "/api/items/:itemId"], "schema"), {
+      ok: true,
+      value: { method: "PATCH", path: "/api/items/:itemId" },
+    });
+  });
+
+  it("rejects unknown filters, unknown methods, bad paths, and extra args", () => {
+    const unknown = parseFilterArgs(["nope"], "schema");
+    assert.equal(unknown.ok, false);
+    if (!unknown.ok) assert.match(unknown.error, /Unknown \/schema filter/);
+
+    const method = parseFilterArgs(["FOO", "/api/items"], "schema");
+    assert.equal(method.ok, false);
+    if (!method.ok) assert.match(method.error, /Unknown method/);
+
+    const path = parseFilterArgs(["GET", "api/items"], "schema");
+    assert.equal(path.ok, false);
+    if (!path.ok) assert.match(path.error, /must start with a slash/);
+
+    const extra = parseFilterArgs(["GET", "/a", "/b"], "schema");
+    assert.equal(extra.ok, false);
+    if (!extra.ok) assert.match(extra.error, /Too many arguments/);
+  });
+});
+
+describe("matchesQuery", () => {
+  it("matches method case-insensitively and normalizes trailing slashes", () => {
+    const endpoint = { method: "POST", path: "/api/items/" };
+    assert.equal(matchesQuery(endpoint, { method: "post" }), true);
+    assert.equal(matchesQuery(endpoint, { path: "/api/items" }), true);
+    assert.equal(matchesQuery(endpoint, { method: "GET", path: "/api/items" }), false);
+  });
+
+  it("matches a concrete path against a :param template", () => {
+    assert.equal(matchesQuery({ method: "GET", path: "/api/items/:itemId" }, { path: "/api/items/item-42" }), true);
+    assert.equal(matchesQuery({ method: "GET", path: "/api/items/:itemId" }, { path: "/api/orders/item-42" }), false);
+  });
+});
+
+describe("describeQuery", () => {
+  it("joins whatever parts are present", () => {
+    assert.equal(describeQuery({ method: "POST", path: "/api/items" }), "POST /api/items");
+    assert.equal(describeQuery({ method: "POST" }), "POST");
+    assert.equal(describeQuery({ path: "/api/items" }), "/api/items");
   });
 });
 
@@ -144,12 +187,14 @@ describe("capTranscript", () => {
 });
 
 describe("handleParsed", () => {
-  it("maps quit/clear and stubs soon commands honestly", () => {
+  it("maps quit/clear and previews async commands honestly", () => {
     assert.equal(handleParsed("/tmp", parseSlashInput("/quit")).action, "quit");
     assert.equal(handleParsed("/tmp", parseSlashInput("/clear")).action, "clear");
-    const soon = handleParsed("/tmp", parseSlashInput("/report"));
-    assert.equal(soon.action, "append");
-    assert.match(soon.lines[0].text, /not implemented yet/);
+    const report = handleParsed("/tmp", parseSlashInput("/report"));
+    assert.equal(report.action, "append");
+    assert.match(report.lines[0].text, /Publishing/);
+    // Every slash command is now ready — no soon stubs remain.
+    assert.ok(SLASH_COMMANDS.every((command) => command.status === "ready") === true);
   });
 
   it("rejects bare /test (method is required) without touching the network", () => {

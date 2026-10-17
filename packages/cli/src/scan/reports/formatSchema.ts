@@ -43,7 +43,7 @@ export function formatBodyEndpoints(graph: ApiGraph): ReportRow[] {
   }
 
   const rows: ReportRow[] = [
-    { text: `✔ Found ${nodes.length} body endpoints`, kind: "header" },
+    { text: `✔ Found ${nodes.length} body endpoint${nodes.length === 1 ? "" : "s"}`, kind: "header" },
     { text: "", kind: "blank" },
   ];
 

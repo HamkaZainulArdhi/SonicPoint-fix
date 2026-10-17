@@ -1,7 +1,4 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
 import { describe, it } from "node:test";
 
 import { buildApiGraph } from "../src/scan/schemas/buildApiGraph.js";
@@ -10,22 +7,11 @@ import { formatBodyEndpoints } from "../src/scan/reports/formatSchema.js";
 import { toSchemaLines } from "../src/tui/views/schemaView.js";
 import { handleParsed } from "../src/tui/repl/dispatchCommands.js";
 import { parseSlashInput } from "../src/tui/repl/commandRegistry.js";
-
-function fixture(files: Record<string, string>): string {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "sp-tui-schema-"));
-
-  for (const [relative, content] of Object.entries(files)) {
-    const full = path.join(root, relative);
-    fs.mkdirSync(path.dirname(full), { recursive: true });
-    fs.writeFileSync(full, content.trimStart(), "utf-8");
-  }
-
-  return root;
-}
+import { tmpProject } from "./helpers/project.js";
 
 const APP = `
   import express from "express";
-  import router from "./routes/lahan.js";
+  import router from "./routes/items.js";
   const app = express();
   app.use("/api", router);
   export default app;
@@ -34,8 +20,8 @@ const APP = `
 const ROUTES = `
   import express from "express";
   const router = express.Router();
-  router.post("/lahan", auth, validate(createLahanSchema), createLahan);
-  router.get("/lahan", listLahan);
+  router.post("/items", auth, validate(createItemSchema), createItem);
+  router.get("/items", listItems);
   router.post("/plain", createPlain);
   router.post("/body", validate(validateBody), createBody);
   export default router;
@@ -43,38 +29,38 @@ const ROUTES = `
 
 const SCHEMA = `
   import Joi from "joi";
-  export const createLahanSchema = Joi.object({
-    nama: Joi.string().required(),
-    luas: Joi.number().required(),
-    lokasi: Joi.string(),
+  export const createItemSchema = Joi.object({
+    title: Joi.string().required(),
+    amount: Joi.number().required(),
+    location: Joi.string(),
   });
 `;
 
-function lahanFixture(extra: Record<string, string> = {}): string {
-  return fixture({
+function itemFixture(extra: Record<string, string> = {}): string {
+  return tmpProject("tui-schema", {
     "src/app.js": APP,
-    "src/routes/lahan.js": ROUTES,
-    "src/schemas/lahan.ts": SCHEMA,
+    "src/routes/items.js": ROUTES,
+    "src/schemas/items.ts": SCHEMA,
     ...extra,
   });
 }
 
 describe("schema linking (acceptance)", () => {
-  it("links POST /api/lahan to createLahanSchema with confidence 100", () => {
-    const graph = buildApiGraph(lahanFixture());
-    const node = graph.endpoints.find((n) => n.id === "POST /api/lahan");
+  it("links POST /api/items to createItemSchema with confidence 100", () => {
+    const graph = buildApiGraph(itemFixture());
+    const node = graph.endpoints.find((n) => n.id === "POST /api/items");
 
     assert.ok(node);
     assert.equal(node.schemaStatus, "detected");
     assert.equal(node.link?.confidence, 100);
     assert.equal(node.link?.reason, "explicit-validation-middleware");
-    assert.equal(node.link?.schemaName, "createLahanSchema");
-    assert.deepEqual(node.requiredFields, ["nama", "luas"]);
+    assert.equal(node.link?.schemaName, "createItemSchema");
+    assert.deepEqual(node.requiredFields, ["title", "amount"]);
   });
 
   it("marks GET without schema as none and excludes it from the report", () => {
-    const graph = buildApiGraph(lahanFixture());
-    const node = graph.endpoints.find((n) => n.id === "GET /api/lahan");
+    const graph = buildApiGraph(itemFixture());
+    const node = graph.endpoints.find((n) => n.id === "GET /api/items");
 
     assert.ok(node);
     assert.equal(node.schemaStatus, "none");
@@ -82,11 +68,11 @@ describe("schema linking (acceptance)", () => {
     const text = formatBodyEndpoints(graph)
       .map((row) => row.text)
       .join("\n");
-    assert.doesNotMatch(text, /GET\s+\/api\/lahan/);
+    assert.doesNotMatch(text, /GET\s+\/api\/items/);
   });
 
   it("marks POST without schema as unknown and renders Schema: unknown", () => {
-    const graph = buildApiGraph(lahanFixture());
+    const graph = buildApiGraph(itemFixture());
     const node = graph.endpoints.find((n) => n.id === "POST /api/plain");
 
     assert.ok(node);
@@ -100,7 +86,7 @@ describe("schema linking (acceptance)", () => {
   });
 
   it("does not link validateBody (no schema-suffix naming convention)", () => {
-    const graph = buildApiGraph(lahanFixture());
+    const graph = buildApiGraph(itemFixture());
     const node = graph.endpoints.find((n) => n.id === "POST /api/body");
 
     assert.ok(node);
@@ -109,7 +95,7 @@ describe("schema linking (acceptance)", () => {
   });
 
   it("ignores schema files outside the five allowed dirs", () => {
-    const root = lahanFixture({
+    const root = itemFixture({
       "src/lib/stray.ts": `
         import Joi from "joi";
         export const straySchema = Joi.object({ a: Joi.string() });
@@ -117,47 +103,47 @@ describe("schema linking (acceptance)", () => {
     });
 
     const names = scanSchemas(root).flatMap((file) => file.schemas.map((schema) => schema.name));
-    assert.deepEqual(names, ["createLahanSchema"]);
+    assert.deepEqual(names, ["createItemSchema"]);
   });
 
   it("skips broken schema files silently, other files still processed", () => {
-    const root = lahanFixture({
+    const root = itemFixture({
       "src/schemas/broken.ts": `export const broken = {{{ not valid js`,
     });
 
     const names = scanSchemas(root).flatMap((file) => file.schemas.map((schema) => schema.name));
-    assert.deepEqual(names, ["createLahanSchema"]);
+    assert.deepEqual(names, ["createItemSchema"]);
   });
 });
 
 describe("/schema TUI output", () => {
   it("renders body endpoints with Required vs Optional fields", () => {
-    const result = handleParsed(lahanFixture(), parseSlashInput("/schema"));
+    const result = handleParsed(itemFixture(), parseSlashInput("/schema"));
 
     assert.equal(result.action, "append");
 
     const text = result.lines.map((line) => line.text).join("\n");
     assert.match(text, /✔ Found 3 body endpoints/);
-    assert.match(text, /POST\s+\/api\/lahan/);
-    assert.match(text, /Schema: createLahanSchema/);
+    assert.match(text, /POST\s+\/api\/items/);
+    assert.match(text, /Schema: createItemSchema/);
     assert.match(text, /Required:/);
-    assert.match(text, /✓ nama\s+string/);
-    assert.match(text, /✓ luas\s+number/);
+    assert.match(text, /✓ title\s+string/);
+    assert.match(text, /✓ amount\s+number/);
     assert.match(text, /Optional:/);
-    assert.match(text, /◯ lokasi\s+string/);
+    assert.match(text, /◯ location\s+string/);
   });
 
   it("maps rows to transcript tones", () => {
-    const graph = buildApiGraph(lahanFixture());
+    const graph = buildApiGraph(itemFixture());
     const byText = new Map(toSchemaLines(graph).map((line) => [line.text, line.tone]));
 
     assert.equal(byText.get("✔ Found 3 body endpoints"), "green");
-    assert.equal(byText.get("Schema: createLahanSchema"), "cyan");
+    assert.equal(byText.get("Schema: createItemSchema"), "cyan");
     assert.equal(byText.get("Schema: unknown"), "yellow");
   });
 
   it("prints No endpoints found when there are no body endpoints", () => {
-    const root = fixture({
+    const root = tmpProject("tui-schema", {
       "src/app.js": `
         import express from "express";
         import router from "./routes/r.js";
@@ -179,5 +165,51 @@ describe("/schema TUI output", () => {
       result.lines.map((line) => line.text),
       ["No endpoints found"],
     );
+  });
+});
+
+describe("/schema filter", () => {
+  it("shows a single endpoint with the filter line", () => {
+    const result = handleParsed(itemFixture(), parseSlashInput("/schema post /api/items"));
+
+    assert.equal(result.action, "append");
+    assert.equal(result.lines[0].text, "Filter: POST /api/items — showing 1 of 3 body endpoints");
+    assert.equal(result.lines[0].tone, "dim");
+
+    const text = result.lines.map((line) => line.text).join("\n");
+    assert.match(text, /✔ Found 1 body endpoint/);
+    assert.match(text, /POST\s+\/api\/items/);
+    assert.match(text, /Schema: createItemSchema/);
+    assert.doesNotMatch(text, /\/api\/plain/);
+    assert.doesNotMatch(text, /\/api\/body/);
+    assert.doesNotMatch(text, /GET\s+\/api\/items/);
+  });
+
+  it("filters by method only", () => {
+    const text = handleParsed(itemFixture(), parseSlashInput("/schema POST"))
+      .lines.map((line) => line.text)
+      .join("\n");
+
+    assert.match(text, /Filter: POST — showing 3 of 3 body endpoints/);
+    assert.match(text, /✔ Found 3 body endpoints/);
+    assert.doesNotMatch(text, /GET\s+\/api\/items/);
+  });
+
+  it("answers no-match with the available targets", () => {
+    const text = handleParsed(itemFixture(), parseSlashInput("/schema POST /api/nope"))
+      .lines.map((line) => line.text)
+      .join("\n");
+
+    assert.match(text, /No endpoint matches POST \/api\/nope\./);
+    assert.match(text, /Available POST: POST \/api\/items · POST \/api\/plain · POST \/api\/body/);
+  });
+
+  it("treats method GET as a normal no-match (body endpoints only)", () => {
+    const text = handleParsed(itemFixture(), parseSlashInput("/schema GET /api/items"))
+      .lines.map((line) => line.text)
+      .join("\n");
+
+    assert.match(text, /No endpoint matches GET \/api\/items\./);
+    assert.match(text, /Available: POST \/api\/items/);
   });
 });

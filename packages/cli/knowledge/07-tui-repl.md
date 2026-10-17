@@ -50,6 +50,7 @@ transcript output
 | `repl/commandRegistry.ts` | Registry 8 command + parser + Enter-accept (murni, unit-tested) | — |
 | `repl/dispatchCommands.ts` | Dispatch ke core (+ `runTest` async untuk `/test`) | `scanEndpoints`, `scanSchemas`, `groupEndpointsByFile`, `buildApiGraph`, `buildKnowledgeGraph`, `runSession` |
 | `repl/testArgs.ts` | Parser strict `/test` — method wajib, bulk cuma GET (murni, unit-tested) | — |
+| `repl/filterArgs.ts` | Parser lenient `[METHOD] [PATH]` + matcher — dipakai `/report`, `/schema`, `/context` (murni, unit-tested) | — |
 | `repl/configForm.ts` | State machine `/config` 6 langkah + validasi + `draftToCredentials` (murni, unit-tested) | `loadCredentials/saveCredentials` shape (`config/app.ts`) |
 | `repl/history.ts` | History shell-style ↑/↓ — push/navigasi/reset (murni, unit-tested) | — |
 | `repl/transcript.ts` | Model scrollback, cap 200 entri | — |
@@ -59,7 +60,7 @@ transcript output
 | `views/testView.ts` | `toTestLines()` TestSession→tone (dipakai `/test`) | dual sink dari `cli/output.ts:renderSession` |
 | `views/configView.ts` | `toConfigFlowLines()` + `displayDraftValue()` redact (dipakai `/config`) | kontrak file yang sama dengan `init` (`config/app.ts`) |
 
-Slash commands: `/scan /schema /context /test /report /config /clear /quit` — high-level action saja. Ready: `scan, schema, context, test, config, clear, quit`. Sisanya stub jujur "not implemented yet" (`/report`). (`/routes` dan `/help` dihapus.)
+Slash commands: `/scan /schema /context /test /report /config /clear /quit` — high-level action saja. **Semua 8 ready** (`/report` selesai; `/routes` dan `/help` dihapus).
 
 ## Tema & tampilan (kontrak visual, keputusan user)
 
@@ -69,23 +70,26 @@ Slash commands: `/scan /schema /context /test /report /config /clear /quit` — 
 - Home tips: `/scan` + `/schema` (tanpa `/routes`); hint `Type / to see all commands`. Guidance tanpa `/help`: input non-slash diarahkan ke `/scan`, `unknown` menampilkan daftar available dari registry.
 - Bahasa visual report: divider `─` + `✓` green (ketemu) vs `◯` dim (absen) + endpoint ber-gap kuning. Lihat C-ADR-12.
 
-## Status (per 2026-10-13)
+## Status (per 2026-10-17)
 
 - `/scan` menampilkan summary counts + **daftar endpoint grup per file** (`METHOD path`, format sama dengan command-mode `scan`).
-- `/schema` menampilkan body endpoints (POST/PUT/PATCH) + schema ter-link + Required (✓) vs Optional (◯), format sama dengan command-mode `scan --schema`. Formatter murni di `scan/reports/formatSchema.ts` (satu sumber, dua sink: `cli/output.ts` + `tui/views/schemaView.ts`).
-- `/context` menampilkan counts hijau + divider `─` per endpoint + detail `✓` (green, ketemu) vs `◯` (dim, `none`/`not detected`) + baris endpoint kuning full-line bila ada gap (`[missing: …]`). Urutan: Controller→Service→Model→Schema→Auth. Format sama dengan command-mode `scan --context`. Formatter murni di `scan/reports/formatContext.ts` (satu sumber, dua sink: `cli/output.ts` + `tui/views/contextView.ts`).
+- `/schema` menampilkan body endpoints (POST/PUT/PATCH) + schema ter-link + Required (✓) vs Optional (◯), format sama dengan command-mode `scan --schema`. Formatter murni di `scan/reports/formatSchema.ts` (satu sumber, dua sink: `cli/output.ts` + `tui/views/schemaView.ts`). Filter opsional `[METHOD] [PATH]`: `/schema post /api/laporan` → baris dim `Filter: … — showing N of M body endpoints` + header plural-aware; tanpa argumen identik dengan sebelumnya (C-ADR-21).
+- `/context` menampilkan counts hijau + divider `─` per endpoint + detail `✓` (green, ketemu) vs `◯` (dim, `none`/`not detected`) + baris endpoint kuning full-line bila ada gap (`[missing: …]`). Urutan: Controller→Service→Model→Schema→Auth. Format sama dengan command-mode `scan --context`. Formatter murni di `scan/reports/formatContext.ts` (satu sumber, dua sink: `cli/output.ts` + `tui/views/contextView.ts`). Filter sama (`/context GET /api/laporan/6775…` cocok template `:param`); `Endpoints:` ikut filter, `Nodes/Edges/Unresolved` tetap global; no-match → `No endpoint matches …` + `Available …` (C-ADR-21).
 - `/test` (method wajib): `/test GET` = semua GET; `/test POST /api/v1/lahan` = 1 endpoint. Bulk write ditolak (`/test POST` tanpa path → error). Detail: [[05-decisions-todo]] C-ADR-15/16.
   - AUTH gate: kredensial harus sudah ada (via `/config` atau `init`); tanpa kredensial → `Not configured — Run /config first` lalu berhenti. Tidak pernah prompt `inquirer` di Ink, secret tidak pernah masuk transcript.
   - `:id`: sampling otomatis dari GET collection sibling → nilai konkret eksplisit (`/test GET /api/items/item-42` via `RunOptions.paramDefaults`) → `skipped` jujur + hint id konkret. Bulk GET di-sort statis-dulu agar cache sampling siap.
-  - Async: `ReplApp.submit` async + guard `isRunning` (satu run dalam satu waktu, anti double-send); entry interim `Testing…` diganti hasil. Tanpa `ora` di TUI.
+  - Async: `ReplApp.submit` async + guard `isRunning` (satu run dalam satu waktu, anti double-send; pesan tolak generik `Already running — wait for it to finish.`). Entry interim dirender `<SpinnerLine label>`, bukan teks mati: frame braille `⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏` @80ms, **spinner amber + teks putih**, tanpa elapsed (`shell/Spinner.tsx`); otomatis diganti hasil asli saat run selesai (tidak pernah bocor ke transcript, `setInterval` dibersihkan). Tanpa `ora` di TUI (rebut stdout Ink).
+  - FK body (`lahanId`): id di-sampling dari API user lalu di-cache di `.sonic-point.json` → baris notice dim prepend ke hasil: `↳ refs.lahan = <id> (saved)` / `↳ refs.lahan was stale — refreshed to <id>`. Sumber: `RunEvents.refSampled` + `run/refs.ts:refNotice`. Detail pipeline: [[02-run]], keputusan: C-ADR-19.
 - `/config` (6 langkah, Ink-native): `Base URL → Login endpoint → Email → Password (masked) → Token field path → Token (opsional)`. Default = fallback existing `prompt.ts`; Enter = keep current. Validasi per langkah (URL http(s), endpoint diawali `/`, email/password wajib kalau token kosong). Tulis hanya di Step 6/6 via `saveCredentials` yang sama dengan `init` (byte-identical, `✔ Backend target config saved.`); tanpa probe network (keputusan user). `Esc` cancel tanpa tulis; `/clear` tengah-flow = cancel + clear (keputusan user); guard silang dengan `isRunning`. Password ter-mask (`•`) + ter-redact (`(set)`/`(empty)`). Detail: [[05-decisions-todo]] C-ADR-17.
+- `/report` (async, guard sama dengan `/test`): `SessionStore.load` → `publishViaPlatform` (BE, `SONIC_POINT_PLATFORM_URL`) → fallback Supabase langsung kalau platform tak terjangkau dan key lokal ada. Filter `[METHOD] [PATH]`; entry interim `Publishing…` juga lewat `SpinnerLine`.
 - `/clear /quit` bekerja (selalu menang walau ada run berjalan atau flow config). Non-TTY → pesan fallback ke command mode (exit 1, tidak hang).
 - Tampilan `/config`: satu list 6 baris terpadu (`✓` done green / `?` aktif yellow / `?` mendatang dim), nilai selalu dalam parens ganda sebagai placeholder (Enter = pakai yang dalam kurung), tanpa counter `Step i/6`, tanpa hint; prompt zone satu baris `›`. Guidance hanya muncul saat validasi gagal (entry error red, self-contained).
-- Verifikasi: `typecheck` + `build` + `test` 88/88 hijau (18 test `/test` + 18 test `/config`: state machine, validasi, mask/redact, unified list, save round-trip); `scan --context` via dist terverifikasi e2e.
+- Verifikasi terakhir: `typecheck` (kini termasuk `tests/` via `tsconfig.test.json`) + `build` + `test` **130/130** hijau (117 existing + 13 baru: parser `filterArgs` + view `/schema`/`/context` terfilter — C-ADR-21; termasuk `refs.test.ts` + e2e FK di `refs-run.test.ts`); `scan --context` via dist terverifikasi e2e.
 - Cek visual interaktif (TTY) dilakukan manual di Windows Terminal — tidak ter-cover automated test (kebijakan: render Ink tidak di-unit-test; hanya layer murni).
 - Batasan sadar: input buffer append-only (tanpa cursor tengah-baris), transcript cap 200, daftar endpoint panjang tanpa paginasi, tanpa navigasi mundur di flow config (follow-up kecil).
 
 ## Follow-up (detail di [[05-decisions-todo]])
 
-- Wire `/report` ke core existing (`/schema`, `/context`, `/test`, `/config` selesai).
+- Semua slash command sudah ter-wire ke core existing (`/scan`, `/schema`, `/context`, `/test`, `/report`, `/config`, `/clear`, `/quit`).
 - Riwayat penerapan & fix `/schema` + `/context`: [[08-schema-context]].
+- Kandidat lanjutan: notice FK untuk path param (`:lahanId`) supaya ikut persisten, bukan cuma body — resolver `run/refs.ts` sudah bisa dipakai ulang.
