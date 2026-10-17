@@ -21,18 +21,20 @@ function textOf(node: ReactNode): string {
 const linkClass =
   "text-electric-gold underline-offset-4 transition-colors hover:text-lightning-yellow hover:underline";
 
-const listClass = "mt-5 space-y-2 pl-5 text-body text-silver-mist marker:text-graphite";
+const listClass = "mt-5 space-y-2 pl-5 text-body text-ash marker:text-iron";
+
+const labelClass = "font-mono text-micro uppercase tracking-[0.05em] text-smoke";
 
 export const mdxComponents = {
   h1: ({ children }: { children?: ReactNode }) => (
-    <h1 className="mt-14 scroll-mt-24 text-heading font-normal text-snow first:mt-0">
+    <h1 className="mt-14 text-heading font-normal text-pure-white first:mt-0">
       {children}
     </h1>
   ),
   h2: ({ children }: { children?: ReactNode }) => (
     <h2
       id={slugify(textOf(children))}
-      className="mt-14 scroll-mt-24 text-heading-sm font-medium text-snow first:mt-0"
+      className="mt-14 text-heading-sm font-medium text-pure-white first:mt-0"
     >
       {children}
     </h2>
@@ -40,13 +42,13 @@ export const mdxComponents = {
   h3: ({ children }: { children?: ReactNode }) => (
     <h3
       id={slugify(textOf(children))}
-      className="mt-10 scroll-mt-24 text-subheading font-medium text-snow"
+      className="mt-10 text-title font-medium text-pure-white"
     >
       {children}
     </h3>
   ),
   p: ({ children }: { children?: ReactNode }) => (
-    <p className="mt-5 text-body text-silver-mist">{children}</p>
+    <p className="mt-5 text-body text-ash">{children}</p>
   ),
   ul: ({ children }: { children?: ReactNode }) => (
     <ul className={`${listClass} list-disc`}>{children}</ul>
@@ -58,7 +60,7 @@ export const mdxComponents = {
     <li className="[&>p]:m-0">{children}</li>
   ),
   blockquote: ({ children }: { children?: ReactNode }) => (
-    <blockquote className="mt-6 border-l-2 border-amber-depth/60 pl-4 text-body-sm text-silver-mist [&>p]:mt-0 [&>p]:text-body-sm">
+    <blockquote className="mt-6 border-l-2 border-amber-depth/60 pl-4 text-body-sm text-ash [&>p]:mt-0 [&>p]:text-body-sm">
       {children}
     </blockquote>
   ),
@@ -74,7 +76,7 @@ export const mdxComponents = {
     ),
   code: ({ children, className }: { children?: ReactNode; className?: string }) => (
     <code
-      className={`rounded-md border border-charcoal bg-ash px-1.5 py-0.5 font-mono text-code text-snow ${className ?? ""}`}
+      className={`rounded-[4px] border border-slate bg-graphite px-1.5 py-0.5 font-mono text-mono text-mist ${className ?? ""}`}
     >
       {children}
     </code>
@@ -83,15 +85,15 @@ export const mdxComponents = {
     <CodeBlock>{children}</CodeBlock>
   ),
   table: ({ children }: { children?: ReactNode }) => (
-    <div className="mt-6 overflow-x-auto rounded-lg border border-charcoal">
+    <div className="mt-6 overflow-x-auto rounded-lg border border-hairline">
       <table className="w-full border-collapse text-body-sm">{children}</table>
     </div>
   ),
   thead: ({ children }: { children?: ReactNode }) => (
-    <thead className="bg-ash/40 text-caption text-silver-mist">{children}</thead>
+    <thead className={`bg-graphite/60 ${labelClass}`}>{children}</thead>
   ),
   tr: ({ children }: { children?: ReactNode }) => (
-    <tr className="border-b border-charcoal last:border-0">{children}</tr>
+    <tr className="border-b border-graphite last:border-0">{children}</tr>
   ),
   th: ({ children }: { children?: ReactNode }) => (
     <th className="whitespace-nowrap px-4 py-2.5 text-left font-medium">{children}</th>
@@ -99,9 +101,9 @@ export const mdxComponents = {
   td: ({ children }: { children?: ReactNode }) => (
     <td className="px-4 py-2.5 align-top">{children}</td>
   ),
-  hr: () => <hr className="mt-10 border-charcoal" />,
+  hr: () => <hr className="mt-10 border-graphite" />,
   strong: ({ children }: { children?: ReactNode }) => (
-    <strong className="font-medium text-snow">{children}</strong>
+    <strong className="font-medium text-pure-white">{children}</strong>
   ),
   Callout,
 };

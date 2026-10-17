@@ -38,23 +38,25 @@ Query listing project/session sudah **dihapus** (bareng route `/projects`). Tanp
 
 ### Shell & util
 
-- **SiteHeader / SiteFooter** — server; brand bolt amber + wordmark mono; nav link `silver-mist → snow`; satu pill primary "Quickstart".
-- **ui.ts** — bukan komponen: kelas bersama. `pill("primary"|"ghost","md"|"sm")` (primary = fill amber + teks **obsidian**), `card`, `well`.
-- **BoltMark** — svg bolt `currentColor`.
-- **CopyButton** — client, `navigator.clipboard`, label berubah "Tersalin" 1,6 dtk; gagal senyap (http/izin).
+- **ui.tsx** — primitif visual: `btn("primary"|"ghost")`, `LogoMark` (diamond amber + glow), `Badge(tone)`, `Kbd`, `IconOrb`, `WindowFrame`, `GhostChip`, `MetricCard`, `Rails` (rail fixed 1248px + crosshair), `Section` (shell section landing: `id/sec/eyebrow/title/description/aside/bg/glow`; root `scroll-mt-[72px]` = offset nav mengapung).
+- **SiteHeader / MiniHeader / SiteFooter** — `SiteHeader` client (landing: anchor section + scroll-spy `IntersectionObserver` rootMargin `-96px 0px -55% 0px` → `aria-current="location"`; tombol kanan "Dokumentasi" → `/docs`; `return null` untuk `/docs`/`/report`; di 404 tampil link Quickstart/FAQ/GitHub). `MiniHeader` server statis (logo → `/`, GitHub, "Beranda") dipakai docs & report. `SiteFooter` server. Semuanya token baru.
+- **InstallButton** — client; salin perintah install via `use-copy`, label "Tersalin"; hanya dipakai di `BottomCta` (bukan navbar lagi).
+- **icons.tsx** — ikon garis stroke `currentColor` + peta `featureIcons` untuk kartu fitur.
+- **Segs.tsx** — render model `Seg`/`Line` dari `lib/landing.ts` (tone → kelas teks, `code` → mono mist). Satu-satunya jalur teks bernada di landing — bukan string HTML.
+- **CopyButton / use-copy (`lib/use-copy.ts`)** — client, `navigator.clipboard`, label berubah "Tersalin" ~1,6 dtk; gagal senyap (http/izin).
 - **CodeBlock** — client; well `bg-ink` + tombol salin mengambang; dipakai MDX (`pre`) dan report (`code=` string). `className` default `mt-6`, bisa di-override (`mt-2`).
 
 ### Docs
 
-- **mdx.tsx** — map elemen MDX → gaya DESIGN (h2/h3 dengan `id={slugify(textOf(children))}`, p/ul/a/table/code/pre/dll). Heading pakai `scroll-mt-24`.
-- **Callout** — `kind="note"|"warn"` (+title); `warn` = border amber + judul electric-gold.
-- **DocsChrome** — `DocsSidebar` (aktif amber), `DocsToc`, `DocsPager`.
+- **mdx.tsx** — map elemen MDX → gaya DESIGN (h2/h3 dengan `id={slugify(textOf(children))}`, p/ul/a/table/code/pre/dll). Heading tanpa `scroll-mt` (offset anchor dari `scroll-padding-top: 24px` global).
+- **Callout** — `kind="note"|"warn"` (+title); `warn` = border `amber-depth` + judul `electric-gold`.
+- **DocsChrome** — `DocsSidebar` (item aktif `lightning-yellow`), `DocsToc` (hover garis amber), `DocsPager` (kartu `edge`-style).
 
 ### Report
 
-- **MethodChip** — pill mono 12px, lebar 64px; border+wash 10% warna method (Swagger dark: GET biru, POST hijau, PUT oranye, PATCH teal, DELETE merah).
-- **StatusBadge** — `✓ <code>` ok / `✗ <code>` err / `SKIPPED` netral (`isSkippedStatus`: CLI menulis string `"SKIPPED"`, bukan angka) / `—` kalau null.
-- **EndpointList** — client; state lokal `useState` (method + query), method chips `SEMUA + unik`, input cari path, counter `n / total`; tiap endpoint `<details>` (tanpa state library): summary = chip + `resolved_path` + badge `AI` + latensi + status + chevron `group-open:rotate-90`; isi = grid metadata (path template/resolved/auth/urutan/diuji) + `Request body`/`Response preview` (CodeBlock) + error/skip (`Alasan skip`).
+- **MethodChip** — chip mono `text-micro` uppercase, lebar 64px; border+wash 10% warna method (Swagger dark: GET `#56c2ff`, POST ok, PUT warn, PATCH teal, DELETE err; lain → netral). Dipakai report + `ReportPreview` landing.
+- **StatusBadge** — `✓ <code>` ok / `✗ <code>` err / `skipped` warn (`isSkippedStatus`: CLI menulis string `"SKIPPED"`, bukan angka) / `—` netral kalau null.
+- **EndpointList** — client; state lokal `useState` (method + query), method chips `SEMUA + unik`, input cari path, counter `n / total`; tiap endpoint `<details>` (tanpa state library): summary = chip + `resolved_path` + badge `AI` + latensi + status + chevron `group-open:rotate-90`; isi = grid metadata (path template/resolved/auth/urutan/diuji) + `Request body`/`Response preview` (CodeBlock) + error/skip (`Alasan skip`, kotak `err`).
 
 ## Helper presentasi (`lib/format.ts`)
 
@@ -68,4 +70,4 @@ Query listing project/session sudah **dihapus** (bareng route `/projects`). Tanp
 
 - Kolom baru → ubah `select` di sini + `types/index.ts` + kontrak Root + CLI `store.ts` bersamaan.
 - `status_code` = `number | string | null` (DB `text`, CLI tulis `String(status)` / `'SKIPPED'`).
-- Interaksi UI report: `<details>` + `useState` lokal saja — tanpa state library (W-ADR-02 amandemen).
+- Interaksi UI report & landing: `<details>` + `useState` lokal saja — tanpa state library (W-ADR-02 amandemen). Warna fungsional tetap sah selama ia membawa data — termasuk mock report landing yang dilabeli `DEMO`.

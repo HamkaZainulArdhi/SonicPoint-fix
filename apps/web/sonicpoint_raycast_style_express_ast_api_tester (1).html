@@ -1,0 +1,1914 @@
+<!DOCTYPE html>
+<html lang="id" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SonicPoint — Scan, Uji, dan Bagikan Endpoint Express.js</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      /* Colors */
+      --color-void-black: #040506;
+      --color-ink: #07080a;
+      --color-obsidian: #111214;
+      --color-graphite: #1b1c1e;
+      --color-smoke: #6a6b6c;
+      --color-ash: #9c9c9d;
+      --color-mist: #e6e6e6;
+      --color-iron: #454647;
+      --color-slate: #2f3031;
+      --color-border-hairline: #363739;
+      --color-pure-white: #ffffff;
+      --color-coral-pulse: #ff6363;
+      --color-ember-hush: #452324;
+      --color-electric-sky: #63a1ff;
+      --color-cobalt-edge: #143ca3;
+      --color-deep-space: #02193b;
+      --color-info-blue: #56c2ff;
+      --color-success-green: #59d499;
+      --color-warn-amber: #ffbe5c;
+
+      /* Typography */
+      --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-geistmono: 'GeistMono', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --font-sf-pro-text: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+
+      /* Shadows */
+      --shadow-key: rgba(255, 255, 255, 0.05) 0px 1px 0px 0px inset, rgba(255, 255, 255, 0.25) 0px 0px 0px 1px, rgba(0, 0, 0, 0.2) 0px -1px 0px 0px inset;
+      --shadow-key-hover: rgba(255, 255, 255, 0.12) 0px 1px 0px 0px inset, rgba(255, 255, 255, 0.38) 0px 0px 0px 1px, rgba(0, 0, 0, 0.35) 0px -1px 0px 0px inset;
+      --shadow-btn-neutral: rgba(0, 0, 0, 0.03) 0px 7px 3px 0px, rgba(0, 0, 0, 0.25) 0px 4px 4px 0px;
+      --shadow-window: rgba(255, 255, 255, 0.1) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.4) 0px 30px 50px 0px, rgba(3, 15, 129, 0.09) 0px 4px 24px 0px, rgba(255, 255, 255, 0.06) 0px 0px 0px 1px inset;
+      --shadow-inset-well: rgba(255, 255, 255, 0.05) 0px 1px 0px 0px inset, rgba(255, 255, 255, 0.1) 0px 0px 0px 1px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background-color: var(--color-void-black);
+      color: var(--color-pure-white);
+      font-family: var(--font-inter);
+      font-feature-settings: 'calt', 'kern', 'liga', 'ss03';
+      margin: 0;
+      overflow-x: hidden;
+    }
+
+    .font-mono-tech {
+      font-family: var(--font-geistmono);
+      font-feature-settings: 'calt', 'kern', 'liga', 'ss03', 'ss09';
+    }
+
+    .font-sf-stat {
+      font-family: var(--font-sf-pro-text);
+    }
+
+    /* Glass Navigation Bar */
+    .ray-glass-nav {
+      background: rgba(4, 5, 6, 0.72);
+      backdrop-filter: blur(48px);
+      -webkit-backdrop-filter: blur(48px);
+      border: 1px solid var(--color-border-hairline);
+      border-radius: 8px;
+      box-shadow: rgba(255, 255, 255, 0.05) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.5) 0px 12px 32px 0px;
+    }
+
+    /* Neutral Filled Button */
+    .ray-btn-primary {
+      background-color: var(--color-mist);
+      color: var(--color-iron);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.008em;
+      padding: 8px 12px;
+      border-radius: 8px;
+      box-shadow: var(--shadow-btn-neutral);
+      transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      line-height: 1.15;
+      cursor: pointer;
+    }
+    .ray-btn-primary:hover {
+      background-color: var(--color-pure-white);
+      color: var(--color-void-black);
+    }
+    .ray-btn-primary:active {
+      transform: translateY(0.5px);
+    }
+
+    /* Ghost / Dark Button */
+    .ray-btn-ghost {
+      background-color: var(--color-obsidian);
+      color: var(--color-ash);
+      border: 1px solid var(--color-slate);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.008em;
+      padding: 8px 12px;
+      border-radius: 8px;
+      box-shadow: rgba(255, 255, 255, 0.05) 0px 1px 0px 0px inset;
+      transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      line-height: 1.15;
+      cursor: pointer;
+    }
+    .ray-btn-ghost:hover {
+      color: var(--color-pure-white);
+      border-color: var(--color-iron);
+      background-color: var(--color-graphite);
+    }
+
+    /* Feature Card with Signature "Keyboard Key" Shadow */
+    .ray-key-card {
+      background-color: transparent;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow-key);
+      transition: box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+    .ray-key-card:hover {
+      box-shadow: var(--shadow-key-hover);
+      background-color: rgba(7, 8, 10, 0.65);
+    }
+
+    /* Warm Coral-Tinted Card Surface */
+    .ray-key-card-coral {
+      background: linear-gradient(180deg, rgba(69, 35, 36, 0.42) 0%, rgba(7, 8, 10, 0.4) 100%);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow-key);
+      transition: box-shadow 0.2s ease;
+    }
+    .ray-key-card-coral:hover {
+      box-shadow: var(--shadow-key-hover);
+    }
+
+    /* Cool Cobalt-Tinted Card Surface */
+    .ray-key-card-blue {
+      background: linear-gradient(180deg, rgba(20, 60, 163, 0.28) 0%, rgba(7, 8, 10, 0.45) 100%);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow-key);
+      transition: box-shadow 0.2s ease;
+    }
+    .ray-key-card-blue:hover {
+      box-shadow: var(--shadow-key-hover);
+    }
+
+    /* Edge-Highlight Card */
+    .ray-edge-card {
+      background-color: transparent;
+      border: 1px solid var(--color-border-hairline);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: rgba(255, 255, 255, 0.05) 0px 1px 0px 0px inset;
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+    .ray-edge-card:hover {
+      border-color: var(--color-iron);
+      background-color: rgba(17, 18, 20, 0.35);
+    }
+
+    /* Circular Icon Container */
+    .ray-icon-orb {
+      border-radius: 99999px;
+      padding: 20px;
+      background-color: var(--color-obsidian);
+      color: var(--color-mist);
+      box-shadow: rgba(255, 255, 255, 0.06) 0px 1px 0px 0px inset, rgba(255, 255, 255, 0.12) 0px 0px 0px 1px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Tactile Keyboard Cap */
+    .ray-kbd {
+      background-color: #151618;
+      color: #9c9c9d;
+      border-radius: 5px;
+      padding: 2px 6px;
+      font-family: var(--font-geistmono);
+      font-size: 11px;
+      line-height: 1.3;
+      box-shadow: rgba(255, 255, 255, 0.08) 0px 1px 0px 0px inset, rgba(255, 255, 255, 0.18) 0px 0px 0px 1px, rgba(0, 0, 0, 0.45) 0px -1px 0px 0px inset;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Inset Input Field / Well */
+    .ray-input-well {
+      border-radius: 8px;
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: 8px 12px;
+      color: var(--color-pure-white);
+      box-shadow: var(--shadow-inset-well);
+    }
+
+    /* Badge Tags */
+    .ray-badge {
+      background-color: var(--color-graphite);
+      color: var(--color-pure-white);
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-family: var(--font-geistmono);
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1.4;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .ray-badge-ai {
+      background-color: var(--color-coral-pulse);
+      color: var(--color-void-black);
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-family: var(--font-geistmono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1.4;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .ray-badge-blue {
+      background-color: rgba(99, 161, 255, 0.16);
+      color: var(--color-electric-sky);
+      border: 1px solid rgba(99, 161, 255, 0.35);
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-family: var(--font-geistmono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1.4;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    /* App Window Mockup */
+    .ray-window-frame {
+      background-color: var(--color-ink);
+      border-radius: 12px;
+      box-shadow: var(--shadow-window);
+    }
+
+    /* Hero Atmospheric Composition */
+    .hero-blue-wash {
+      background: radial-gradient(50% 50% at 50% 50%, rgba(4, 63, 150, 0.72) 0%, rgba(20, 60, 163, 0.38) 46%, rgba(6, 18, 37, 0.25) 74%, rgba(4, 5, 6, 0) 100%);
+      filter: blur(37.5px);
+    }
+    .hero-coral-bar-1 {
+      background: linear-gradient(90deg, rgba(255, 99, 99, 0.05) 0%, rgba(255, 99, 99, 0.52) 50%, rgba(99, 161, 255, 0.25) 100%);
+      filter: blur(44px);
+      transform: translate(-50%, -50%) rotate(-24deg);
+    }
+    .hero-coral-bar-2 {
+      background: linear-gradient(90deg, rgba(20, 60, 163, 0.4) 0%, rgba(255, 99, 99, 0.36) 60%, rgba(2, 25, 59, 0) 100%);
+      filter: blur(38px);
+      transform: translate(-50%, -50%) rotate(-24deg);
+    }
+
+    /* Subtle Animated Pulse Line */
+    @keyframes flowPulse {
+      0%, 100% { opacity: 0.35; }
+      50% { opacity: 1; }
+    }
+    .animate-flow {
+      animation: flowPulse 2.4s ease-in-out infinite;
+    }
+
+    /* ── CLEAN ARCHITECTURAL BACKGROUND COMPONENTS (POST-HEADER) ─────── */
+    .bg-tech-grid-clean {
+      background-size: 48px 48px;
+      background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+      mask-image: radial-gradient(ellipse 85% 75% at 50% 50%, #000 35%, transparent 100%);
+      -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 50%, #000 35%, transparent 100%);
+    }
+
+    .bg-dot-matrix-clean {
+      background-image: radial-gradient(rgba(255, 255, 255, 0.065) 1px, transparent 1px);
+      background-size: 24px 24px;
+      mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, #000 30%, transparent 100%);
+      -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, #000 30%, transparent 100%);
+    }
+
+    .section-top-beam {
+      position: absolute;
+      top: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(680px, 85vw);
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, rgba(255, 99, 99, 0.45) 35%, rgba(99, 161, 255, 0.45) 65%, transparent 100%);
+      pointer-events: none;
+    }
+
+    .rail-crosshair {
+      position: absolute;
+      width: 11px;
+      height: 11px;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .rail-crosshair::before,
+    .rail-crosshair::after {
+      content: '';
+      position: absolute;
+      background-color: #454647;
+    }
+    .rail-crosshair::before {
+      top: 5px;
+      left: 0;
+      width: 11px;
+      height: 1px;
+    }
+    .rail-crosshair::after {
+      top: 0;
+      left: 5px;
+      width: 1px;
+      height: 11px;
+    }
+
+    .bg-ghost-chip {
+      border: 1px solid rgba(255, 255, 255, 0.045);
+      background: rgba(11, 12, 14, 0.55);
+      backdrop-filter: blur(8px);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-family: var(--font-geistmono);
+      font-size: 10px;
+      color: rgba(156, 156, 157, 0.45);
+      letter-spacing: 0.04em;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #040506;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2f3031;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="selection:bg-[#ff6363]/25 selection:text-[#ff6363]">
+
+  <!-- ── FLOATING GLASS NAVIGATION BAR ──────────────────────────────────── -->
+  <header class="fixed top-[16px] inset-x-0 z-50 px-[16px] sm:px-[24px]">
+    <nav aria-label="Main Navigation" class="ray-glass-nav mx-auto max-w-[1200px] px-[16px] py-[8px] flex items-center justify-between gap-[16px]">
+      <!-- Left: Coral Pulse Diamond Logo + Wordmark -->
+      <a href="#" class="inline-flex items-center gap-[8px] text-[13px] font-medium tracking-[0.008em] text-[#ffffff] focus:outline-none">
+        <span class="relative flex items-center justify-center w-[16px] h-[16px]">
+          <span class="w-[10px] h-[10px] rotate-45 rounded-[2px] bg-[#ff6363] shadow-[0_0_12px_rgba(255,99,99,0.65)]"></span>
+        </span>
+        <span>SonicPoint</span>
+        <span class="ray-badge ml-[4px] !text-[10px] !py-[1px] !px-[5px] text-[#9c9c9d]">v1.4.2</span>
+      </a>
+
+      <!-- Center: Ghost Nav Links -->
+      <div class="hidden lg:flex items-center gap-[22px] text-[13px] font-medium tracking-[0.008em] text-[#9c9c9d]">
+        <a href="#preview" class="transition-colors hover:text-[#ffffff]">Interactive CLI</a>
+        <a href="#ast-lab" class="transition-colors hover:text-[#ffffff]">AST &amp; Schema Lab</a>
+        <a href="#relational" class="transition-colors hover:text-[#ffffff]">Relational ID</a>
+        <a href="#report-preview" class="transition-colors hover:text-[#ffffff]">Live Report</a>
+        <a href="#config" class="transition-colors hover:text-[#ffffff]">Config &amp; CI</a>
+        <a href="#faq" class="transition-colors hover:text-[#ffffff]">FAQ</a>
+      </div>
+
+      <!-- Right: Command Palette Trigger + Install CTA -->
+      <div class="flex items-center gap-[8px]">
+
+        <button type="button" onclick="copyInstallCommand('nav')" class="ray-btn-primary">
+          <svg class="w-[15px] h-[15px] text-[#040506]" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M2.5 3.5A1.5 1.5 0 0 1 4 2h8a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 12 14H4a1.5 1.5 0 0 1-1.5-1.5v-9ZM4.75 6a.75.75 0 0 0-.53 1.28L5.94 9l-1.72 1.72a.75.75 0 1 0 1.06 1.06l2.25-2.25a.75.75 0 0 0 0-1.06L5.28 6.22A.75.75 0 0 0 4.75 6Zm3.5 4.5a.75.75 0 0 0 0 1.5h2.5a.75.75 0 0 0 0-1.5h-2.5Z"/>
+          </svg>
+          <span id="nav-copy-label">Install Package</span>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ── GLOBAL STRUCTURAL RAILS (Clean Architectural Frame) ─────────── -->
+  <div aria-hidden="true" class="pointer-events-none fixed inset-0 z-0 flex justify-center overflow-hidden">
+    <div class="w-full max-w-[1248px] h-full border-x border-[#1b1c1e]/75 relative">
+      <!-- Subtle Secondary Inner Guide Lines -->
+      <div class="hidden lg:block absolute inset-y-0 left-1/3 w-[1px] bg-gradient-to-b from-transparent via-[#1b1c1e]/30 to-transparent"></div>
+      <div class="hidden lg:block absolute inset-y-0 left-2/3 w-[1px] bg-gradient-to-b from-transparent via-[#1b1c1e]/30 to-transparent"></div>
+    </div>
+  </div>
+
+  <main class="relative z-10">
+    <!-- ── HERO SECTION: Full-bleed Red/Blue Gradient Geometry ──────────── -->
+    <section class="relative overflow-hidden border-b border-[#363739]/60 pt-[120px] pb-[72px] sm:pt-[152px] sm:pb-[96px]">
+      <!-- Dramatic Red/Blue Geometric Backdrop + Clean Perspective Grid -->
+      <div aria-hidden="true" class="pointer-events-none select-none absolute inset-0 overflow-hidden">
+        <div class="bg-tech-grid-clean absolute inset-0 opacity-85"></div>
+        <div class="hero-blue-wash absolute left-1/2 top-[28%] w-[1080px] h-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full"></div>
+        <div class="hero-coral-bar-1 absolute left-1/2 top-[22%] w-[780px] h-[140px] rounded-full"></div>
+        <div class="hero-coral-bar-2 absolute left-[56%] top-[34%] w-[560px] h-[88px] rounded-full"></div>
+        <!-- Subtle Floating Architectural Telemetry Badges in Background -->
+        <div class="hidden xl:flex items-center gap-[6px] bg-ghost-chip absolute left-[6%] top-[26%]">
+          <span class="w-[5px] h-[5px] rounded-full bg-[#ff6363]/40"></span>
+          <span>AST::RouterMount[0x01]</span>
+        </div>
+        <div class="hidden xl:flex items-center gap-[6px] bg-ghost-chip absolute right-[6%] top-[32%]">
+          <span class="w-[5px] h-[5px] rounded-full bg-[#63a1ff]/40"></span>
+          <span>Schema::ZodObject&lt;Strict&gt;</span>
+        </div>
+        <div class="absolute inset-x-0 bottom-0 h-[160px] bg-gradient-to-t from-[#040506] via-[#040506]/85 to-transparent"></div>
+      </div>
+
+      <div class="relative mx-auto max-w-[1200px] px-[24px] text-center">
+
+        <!-- Hero Headline -->
+        <h1 class="mx-auto mt-[24px] max-w-[820px] text-[38px] sm:text-[56px] font-normal leading-[1.15] sm:leading-[1.17] tracking-[0.22px] text-[#ffffff]">
+          Semua endpoint Express-mu,<br />
+          scan — uji — bagikan.
+        </h1>
+
+        <!-- Subheadline -->
+        <p class="mx-auto mt-[24px] max-w-[540px] text-[16px] font-normal leading-[1.55] text-[#9c9c9d]">
+          SonicPoint membaca router Express-mu langsung dari AST, menyusun payload dari schema validasi, menyampel ID relasi asli dari database API-mu, lalu menerbitkan laporan bergaya Swagger lewat satu link.
+        </p>
+
+        <!-- Primary Action Button Group -->
+        <div class="mt-[32px] flex flex-wrap items-center justify-center gap-[8px]">
+          <a href="#workflow" class="ray-btn-primary">
+            <svg class="w-[15px] h-[15px] text-[#040506]" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1Zm-.75 4.75a.75.75 0 0 1 1.14-.64l3.25 2a.75.75 0 0 1 0 1.28l-3.25 2a.75.75 0 0 1-1.14-.64v-4Z"/>
+            </svg>
+            <span>Mulai — Quickstart</span>
+          </a>
+          <a href="#ast-lab" class="ray-btn-ghost">
+            <svg class="w-[15px] h-[15px] text-[#9c9c9d]" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M5 4 1.5 8 5 12M11 4l3.5 4-3.5 4M9 2.5 7 13.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Eksplorasi AST &amp; Schema Lab</span>
+          </a>
+        </div>
+
+        <!-- Package Manager Switcher + Inset Input Well -->
+        <div class="mx-auto mt-[28px] max-w-[460px]">
+          <div class="mb-[6px] flex items-center justify-center gap-[4px]">
+            <button type="button" onclick="setPkgManager('npm')" id="pkg-npm" class="pkg-tab rounded-[5px] px-[8px] py-[2px] font-mono-tech text-[11px] bg-[#1b1c1e] text-[#ffffff] border border-[#363739]">npm</button>
+            <button type="button" onclick="setPkgManager('pnpm')" id="pkg-pnpm" class="pkg-tab rounded-[5px] px-[8px] py-[2px] font-mono-tech text-[11px] text-[#6a6b6c] hover:text-[#ffffff] border border-transparent">pnpm</button>
+            <button type="button" onclick="setPkgManager('bun')" id="pkg-bun" class="pkg-tab rounded-[5px] px-[8px] py-[2px] font-mono-tech text-[11px] text-[#6a6b6c] hover:text-[#ffffff] border border-transparent">bun</button>
+            <button type="button" onclick="setPkgManager('npx')" id="pkg-npx" class="pkg-tab rounded-[5px] px-[8px] py-[2px] font-mono-tech text-[11px] text-[#6a6b6c] hover:text-[#ffffff] border border-transparent">npx (tanpa install)</button>
+          </div>
+          <div class="ray-input-well flex items-center justify-between gap-[12px]">
+            <div class="flex items-center gap-[8px] truncate font-mono-tech text-[13px]">
+              <span class="select-none text-[#ff6363]">$</span>
+              <code id="install-cmd-text" class="truncate text-[#ffffff]">npm install -g sonic-point</code>
+            </div>
+            <button
+              type="button"
+              onclick="copyInstallCommand('hero')"
+              class="inline-flex items-center gap-[6px] rounded-[6px] bg-[#1b1c1e] px-[8px] py-[4px] font-mono-tech text-[11px] text-[#9c9c9d] hover:text-[#ffffff] hover:bg-[#2f3031] transition-colors shrink-0"
+              aria-label="Salin perintah instalasi"
+            >
+              <svg class="w-[13px] h-[13px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span id="hero-copy-text">Copy</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Telemetry / Benchmark Metric Strip -->
+        <div class="mx-auto mt-[56px] max-w-[960px] grid grid-cols-2 sm:grid-cols-4 gap-[12px] text-left">
+          <div class="rounded-[12px] bg-[#07080a]/80 border border-[#2f3031] p-[16px] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
+            <div class="font-mono-tech text-[10px] uppercase tracking-[0.06em] text-[#6a6b6c]">AST Parse Speed</div>
+            <div class="mt-[6px] font-sf-stat text-[24px] font-medium text-[#ffffff]">&lt; 45ms</div>
+            <div class="mt-[2px] text-[12px] text-[#9c9c9d]">Untuk ~50 modul router Express</div>
+          </div>
+          <div class="rounded-[12px] bg-[#07080a]/80 border border-[#2f3031] p-[16px] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
+            <div class="font-mono-tech text-[10px] uppercase tracking-[0.06em] text-[#6a6b6c]">Fake Relational IDs</div>
+            <div class="mt-[6px] font-sf-stat text-[24px] font-medium text-[#59d499]">0%</div>
+            <div class="mt-[2px] text-[12px] text-[#9c9c9d]">Murni disampel dari GET milikmu</div>
+          </div>
+          <div class="rounded-[12px] bg-[#07080a]/80 border border-[#2f3031] p-[16px] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
+            <div class="font-mono-tech text-[10px] uppercase tracking-[0.06em] text-[#6a6b6c]">Validator Support</div>
+            <div class="mt-[6px] font-sf-stat text-[24px] font-medium text-[#ffffff]">Joi · Zod · Yup</div>
+            <div class="mt-[2px] text-[12px] text-[#9c9c9d]">Deteksi otomatis via AST</div>
+          </div>
+          <div class="rounded-[12px] bg-[#07080a]/80 border border-[#2f3031] p-[16px] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
+            <div class="font-mono-tech text-[10px] uppercase tracking-[0.06em] text-[#6a6b6c]">Boilerplate Test</div>
+            <div class="mt-[6px] font-sf-stat text-[24px] font-medium text-[#ff6363]">0 Baris</div>
+            <div class="mt-[2px] text-[12px] text-[#9c9c9d]">Tanpa perlu koleksi Postman manual</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── APP WINDOW MOCKUP SECTION: Interactive Terminal & Command Bar ── -->
+    <section id="preview" class="relative overflow-hidden border-b border-[#363739]/60 py-[80px] sm:py-[112px]">
+      <!-- Clean Background Components for Interactive CLI Section -->
+      <div aria-hidden="true" class="pointer-events-none select-none absolute inset-0 overflow-hidden">
+        <div class="section-top-beam"></div>
+        <div class="bg-dot-matrix-clean absolute inset-0 opacity-75"></div>
+        <!-- Soft Ambient Aura behind Terminal Window -->
+        <div class="absolute left-1/2 top-[56%] -translate-x-1/2 -translate-y-1/2 w-[880px] h-[420px] rounded-full bg-gradient-to-tr from-[#ff6363]/[0.07] via-[#143ca3]/[0.08] to-transparent blur-[80px]"></div>
+        <!-- Structural Corner Crosshairs + Coordinate Tag -->
+        <div class="mx-auto max-w-[1248px] h-full relative">
+          <div class="rail-crosshair -top-[5px] -left-[6px]"></div>
+          <div class="rail-crosshair -top-[5px] -right-[6px]"></div>
+          <div class="hidden xl:block absolute top-[18px] left-[20px] font-mono-tech text-[10px] tracking-[0.12em] text-[#363739] uppercase">
+            SEC // 01 · REPL_WORKBENCH
+          </div>
+          <div class="hidden xl:block absolute bottom-[22px] right-[20px] font-mono-tech text-[10px] tracking-[0.08em] text-[#2f3031]">
+            [PTY: 120x38 · UTF-8]
+          </div>
+        </div>
+      </div>
+
+      <div class="relative mx-auto max-w-[1200px] px-[24px]">
+        <div class="mb-[32px] flex flex-col sm:flex-row sm:items-end justify-between gap-[16px]">
+          <div>
+            <p class="font-mono-tech text-[11px] font-medium uppercase leading-[0.91] tracking-[0.8px] text-[#ff6363]">
+              Interactive CLI Workbench
+            </p>
+            <h2 class="mt-[12px] text-[28px] sm:text-[32px] font-normal leading-[1.15] text-[#ffffff]">
+              Simulasikan REPL langsung di browser.
+            </h2>
+          </div>
+          <div class="flex items-center gap-[8px] font-mono-tech text-[12px] text-[#9c9c9d]">
+            <span>Navigasi cepat:</span>
+            <span class="ray-kbd">1</span>
+            <span class="ray-kbd">2</span>
+            <span class="ray-kbd">3</span>
+            <span class="ray-kbd">4</span>
+            <span class="ray-kbd">5</span>
+          </div>
+        </div>
+
+        <!-- Window Chrome -->
+        <div class="ray-window-frame mx-auto max-w-[1040px] p-[8px]">
+          <!-- Top Command Bar -->
+          <div class="rounded-[12px] bg-[#111214] p-[12px] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05),0_0_0_1px_rgba(255,255,255,0.08)]">
+            <div class="flex flex-wrap items-center justify-between gap-[12px]">
+              <!-- Window Traffic Lights + Prompt -->
+              <div class="flex items-center gap-[12px]">
+                <div class="flex items-center gap-[6px] pl-[4px]">
+                  <span class="w-[10px] h-[10px] rounded-full bg-[#ff6363]/80"></span>
+                  <span class="w-[10px] h-[10px] rounded-full bg-[#ffbe5c]/80"></span>
+                  <span class="w-[10px] h-[10px] rounded-full bg-[#59d499]/80"></span>
+                </div>
+                <div class="h-[14px] w-[1px] bg-[#2f3031]"></div>
+                <div class="flex items-center gap-[8px] font-mono-tech text-[12px] text-[#ffffff]">
+                  <span class="w-[7px] h-[7px] rotate-45 bg-[#ff6363]"></span>
+                  <span id="terminal-prompt-title">sonic-point &gt; /scan</span>
+                </div>
+              </div>
+
+              <!-- Interactive Command Tabs -->
+              <div class="flex flex-wrap items-center gap-[6px]" role="tablist" aria-label="Pilih simulasi perintah CLI">
+                <button type="button" onclick="switchTerminalTab('scan')" id="tab-scan" class="term-tab rounded-[6px] px-[9px] py-[4px] font-mono-tech text-[11px] transition-colors bg-[#ff6363] text-[#040506] font-medium">
+                  /scan
+                </button>
+                <button type="button" onclick="switchTerminalTab('schema')" id="tab-schema" class="term-tab rounded-[6px] px-[9px] py-[4px] font-mono-tech text-[11px] transition-colors bg-[#1b1c1e] text-[#9c9c9d] hover:text-[#ffffff]">
+                  /schema
+                </button>
+                <button type="button" onclick="switchTerminalTab('context')" id="tab-context" class="term-tab rounded-[6px] px-[9px] py-[4px] font-mono-tech text-[11px] transition-colors bg-[#1b1c1e] text-[#9c9c9d] hover:text-[#ffffff]">
+                  /context
+                </button>
+                <button type="button" onclick="switchTerminalTab('test')" id="tab-test" class="term-tab rounded-[6px] px-[9px] py-[4px] font-mono-tech text-[11px] transition-colors bg-[#1b1c1e] text-[#9c9c9d] hover:text-[#ffffff]">
+                  /test
+                </button>
+                <button type="button" onclick="switchTerminalTab('report')" id="tab-report" class="term-tab rounded-[6px] px-[9px] py-[4px] font-mono-tech text-[11px] transition-colors bg-[#1b1c1e] text-[#9c9c9d] hover:text-[#ffffff]">
+                  /report
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Internal UI Content Area -->
+          <div class="mt-[8px] grid grid-cols-1 lg:grid-cols-12 gap-[8px]">
+            <!-- Left Column: Discovered Endpoints List -->
+            <div class="lg:col-span-5 rounded-[8px] bg-[#040506]/70 p-[12px] border border-[#1b1c1e] flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between pb-[8px] mb-[8px] border-b border-[#1b1c1e]">
+                  <span class="font-mono-tech text-[10px] uppercase tracking-[0.05em] text-[#6a6b6c]">Express AST Endpoints (6)</span>
+                  <span class="font-mono-tech text-[10px] text-[#9c9c9d]">src/routes/index.ts</span>
+                </div>
+                <div id="endpoint-list" class="space-y-[4px]">
+                  <!-- Populated dynamically -->
+                </div>
+              </div>
+
+              <!-- Relational Context Mini-Card inside Sidebar -->
+              <div class="mt-[12px] rounded-[6px] bg-[#111214] p-[10px] border border-[#2f3031]">
+                <div class="flex items-center justify-between font-mono-tech text-[10px] text-[#9c9c9d]">
+                  <span>SESSION AUTH &amp; CACHE</span>
+                  <span class="text-[#59d499]">● ACTIVE</span>
+                </div>
+                <div class="mt-[6px] font-mono-tech text-[11px] text-[#6a6b6c] space-y-[2px]">
+                  <div class="flex justify-between"><span>Bearer Token:</span><span class="text-[#e6e6e6]">eyJhbGci...9xKp</span></div>
+                  <div class="flex justify-between"><span>Cached lahanId:</span><span class="text-[#e6e6e6]">14 real IDs</span></div>
+                  <div class="flex justify-between"><span>Cached itemId:</span><span class="text-[#e6e6e6]">22 real IDs</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column: Live CLI Output & Inspector -->
+            <div class="lg:col-span-7 rounded-[8px] bg-[#040506] p-[16px] border border-[#1b1c1e] flex flex-col justify-between min-h-[360px]">
+              <div>
+                <div class="flex items-center justify-between pb-[8px] mb-[12px] border-b border-[#1b1c1e]">
+                  <span id="inspector-heading" class="font-mono-tech text-[10px] uppercase tracking-[0.05em] text-[#6a6b6c]">CLI Execution Output</span>
+                  <span id="inspector-badge" class="ray-badge !text-[#9c9c9d]">AST + Joi/Zod</span>
+                </div>
+                <div id="terminal-body" class="font-mono-tech text-[12px] leading-[1.65] text-[#9c9c9d] space-y-[6px] overflow-x-auto">
+                  <!-- Dynamic terminal lines injected by JS -->
+                </div>
+              </div>
+
+              <!-- Interactive Payload / Response Preview Box inside Terminal -->
+              <div id="terminal-json-box" class="mt-[14px] rounded-[6px] bg-[#07080a] border border-[#1b1c1e] p-[10px] font-mono-tech text-[11px] text-[#9c9c9d]">
+                <!-- Populated dynamically -->
+              </div>
+
+              <!-- Bottom Status Bar inside Window -->
+              <div class="mt-[14px] pt-[12px] border-t border-[#1b1c1e] flex flex-wrap items-center justify-between gap-[8px] font-mono-tech text-[11px] text-[#6a6b6c]">
+                <div class="flex items-center gap-[8px]">
+                  <span class="inline-block w-[6px] h-[6px] rounded-full bg-[#59d499]"></span>
+                  <span id="terminal-status-label">Ready · 0 fake IDs generated</span>
+                </div>
+                <div class="flex items-center gap-[6px]">
+                  <span>Tekan</span>
+                  <span class="ray-kbd !text-[10px]">1-5</span>
+                  <span>atau klik endpoint di kiri</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── NEW SECTION: AST & SCHEMA TRANSPILER LAB (Interactive) ────────── -->
+    <section id="ast-lab" class="relative overflow-hidden border-b border-[#363739]/60 py-[80px] sm:py-[120px]">
+      <!-- Clean Background Components for AST Lab -->
+      <div aria-hidden="true" class="pointer-events-none select-none absolute inset-0 overflow-hidden">
+        <div class="section-top-beam"></div>
+        <div class="bg-tech-grid-clean absolute inset-0 opacity-65"></div>
+        <!-- Subtle Cobalt & Coral Ambient Orbs -->
+        <div class="absolute left-[18%] top-[60%] -translate-y-1/2 w-[500px] h-[320px] rounded-full bg-[#143ca3]/[0.09] blur-[90px]"></div>
+        <div class="absolute right-[12%] top-[55%] -translate-y-1/2 w-[460px] h-[300px] rounded-full bg-[#ff6363]/[0.06] blur-[90px]"></div>
+        <!-- Faint Architectural SVG AST Node Circuit in Background -->
+        <svg class="hidden lg:block absolute right-[4%] top-[12%] w-[420px] h-[180px] text-[#ffffff]/[0.035]" viewBox="0 0 420 180" fill="none">
+          <path d="M20 40 H140 L180 80 H310" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4"/>
+          <path d="M140 40 L180 140 H280" stroke="currentColor" stroke-width="1"/>
+          <circle cx="20" cy="40" r="4" fill="currentColor"/>
+          <circle cx="140" cy="40" r="4" fill="currentColor"/>
+          <circle cx="180" cy="80" r="4" fill="currentColor"/>
+          <circle cx="310" cy="80" r="4" fill="currentColor"/>
+          <circle cx="180" cy="140" r="4" fill="currentColor"/>
+          <circle cx="280" cy="140" r="4" fill="currentColor"/>
+          <text x="190" y="72" fill="currentColor" font-family="monospace" font-size="9">AST::CallExpression(router.post)</text>
+          <text x="190" y="132" fill="currentColor" font-family="monospace" font-size="9">Schema::ValidatorMiddleware</text>
+        </svg>
+        <div class="mx-auto max-w-[1248px] h-full relative">
+          <div class="rail-crosshair -top-[5px] -left-[6px]"></div>
+          <div class="rail-crosshair -top-[5px] -right-[6px]"></div>
+          <div class="hidden xl:block absolute top-[18px] left-[20px] font-mono-tech text-[10px] tracking-[0.12em] text-[#363739] uppercase">
+            SEC // 02 · AST_TRANSPILER_PIPELINE
+          </div>
+        </div>
+      </div>
+
+      <div class="relative mx-auto max-w-[1200px] px-[24px]">
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-[24px]">
+          <div class="max-w-[640px]">
+            <p class="font-mono-tech text-[11px] font-medium uppercase leading-[0.91] tracking-[0.8px] text-[#63a1ff]">
+              Deep-Dive: Schema-to-Payload Engine
+            </p>
+            <h2 class="mt-[16px] text-[32px] font-normal leading-[1.15] text-[#ffffff]">
+              Lihat bagaimana SonicPoint membaca kode Express-mu.
+            </h2>
+            <p class="mt-[14px] text-[16px] font-normal leading-[1.5] text-[#9c9c9d]">
+              Tanpa anotasi JSDoc tambahan atau dekorator khusus. Pilih library validasi yang kamu gunakan di bawah ini untuk melihat bagaimana AST Walker mengekstrak aturan dan menyusun payload siap kirim.
+            </p>
+          </div>
+
+          <!-- Validator Switcher Buttons -->
+          <div class="inline-flex items-center gap-[6px] rounded-[10px] bg-[#111214] p-[6px] border border-[#2f3031] self-start">
+            <button type="button" onclick="selectValidatorLab('zod')" id="lab-btn-zod" class="rounded-[6px] px-[12px] py-[6px] font-mono-tech text-[12px] font-medium transition-all bg-[#e6e6e6] text-[#040506]">
+              Zod Schema
+            </button>
+            <button type="button" onclick="selectValidatorLab('joi')" id="lab-btn-joi" class="rounded-[6px] px-[12px] py-[6px] font-mono-tech text-[12px] font-medium transition-all text-[#9c9c9d] hover:text-[#ffffff]">
+              Joi Schema
+            </button>
+            <button type="button" onclick="selectValidatorLab('yup')" id="lab-btn-yup" class="rounded-[6px] px-[12px] py-[6px] font-mono-tech text-[12px] font-medium transition-all text-[#9c9c9d] hover:text-[#ffffff]">
+              Yup Schema
+            </button>
+          </div>
+        </div>
+
+        <!-- 3-Stage Code Transformation Pipeline -->
+        <div class="mt-[40px] grid grid-cols-1 lg:grid-cols-3 gap-[16px]">
+          <!-- Panel 1: Express Route + Validator Code -->
+          <div class="ray-edge-card !p-[16px] flex flex-col justify-between bg-[#07080a]/70">
+            <div>
+              <div class="flex items-center justify-between pb-[12px] mb-[12px] border-b border-[#2f3031]">
+                <div class="flex items-center gap-[8px]">
+                  <span class="w-[8px] h-[8px] rounded-full bg-[#ff6363]"></span>
+                  <span id="lab-file-title" class="font-mono-tech text-[12px] text-[#ffffff]">src/routes/panen.route.ts</span>
+                </div>
+                <span class="ray-badge text-[#9c9c9d]">1. Source Code</span>
+              </div>
+              <pre id="lab-source-code" class="font-mono-tech text-[12px] leading-[1.65] text-[#e6e6e6] overflow-x-auto"></pre>
+            </div>
+            <div class="mt-[16px] pt-[12px] border-t border-[#1b1c1e] font-mono-tech text-[11px] text-[#6a6b6c]">
+              Mount terdeteksi: <span class="text-[#9c9c9d]">app.use('/api/v1', router)</span>
+            </div>
+          </div>
+
+          <!-- Panel 2: Extracted AST Contract & Constraints -->
+          <div class="ray-edge-card !p-[16px] flex flex-col justify-between bg-[#07080a]/70">
+            <div>
+              <div class="flex items-center justify-between pb-[12px] mb-[12px] border-b border-[#2f3031]">
+                <div class="flex items-center gap-[8px]">
+                  <span class="w-[8px] h-[8px] rounded-full bg-[#63a1ff]"></span>
+                  <span class="font-mono-tech text-[12px] text-[#ffffff]">Extracted AST Contract</span>
+                </div>
+                <span class="ray-badge-blue">2. AST Descriptor</span>
+              </div>
+              <pre id="lab-ast-output" class="font-mono-tech text-[12px] leading-[1.65] text-[#9c9c9d] overflow-x-auto"></pre>
+            </div>
+            <div class="mt-[16px] pt-[12px] border-t border-[#1b1c1e] font-mono-tech text-[11px] text-[#6a6b6c]">
+              Foreign key terdeteksi: <span class="text-[#63a1ff]">lahanId &rarr; GET /api/v1/lahan</span>
+            </div>
+          </div>
+
+          <!-- Panel 3: Synthesized Payload + Real Sampled ID -->
+          <div class="ray-key-card-coral !p-[16px] flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between pb-[12px] mb-[12px] border-b border-[#452324]">
+                <div class="flex items-center gap-[8px]">
+                  <span class="w-[8px] h-[8px] rounded-full bg-[#59d499]"></span>
+                  <span class="font-mono-tech text-[12px] text-[#ffffff]">Synthesized Request Body</span>
+                </div>
+                <span class="ray-badge-ai">3. Live Payload</span>
+              </div>
+              <pre id="lab-payload-output" class="font-mono-tech text-[12px] leading-[1.65] text-[#ffffff] overflow-x-auto"></pre>
+            </div>
+            <div class="mt-[16px] pt-[12px] border-t border-[#452324] flex items-center justify-between font-mono-tech text-[11px] text-[#e6e6e6]">
+              <span>Status Uji: <span class="text-[#59d499]">201 Created (58ms)</span></span>
+              <span>0 Fake UUID</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── FEATURES SECTION: 6 Tactile Key Shadow Cards ─────────────────── -->
+    <section id="features" class="relative overflow-hidden border-b border-[#363739]/60 py-[80px] sm:py-[120px]">
+      <!-- Clean Background Components for Features Grid -->
+      <div aria-hidden="true" class="pointer-events-none select-none absolute inset-0 overflow-hidden">
+        <div class="section-top-beam"></div>
+        <div class="bg-tech-grid-clean absolute inset-0 opacity-60"></div>
+        <!-- Soft Diagonal Light Wash -->
+        <div class="absolute left-1/2 top-[55%] -translate-x-1/2 -translate-y-1/2 w-[920px] h-[340px] -rotate-12 rounded-full bg-gradient-to-r from-[#ff6363]/[0.05] via-[#143ca3]/[0.06] to-[#59d499]/[0.04] blur-[90px]"></div>
+        <div class="mx-auto max-w-[1248px] h-full relative">
+          <div class="rail-crosshair -top-[5px] -left-[6px]"></div>
+          <div class="rail-crosshair -top-[5px] -right-[6px]"></div>
+          <div class="hidden xl:block absolute top-[18px] left-[20px] font-mono-tech text-[10px] tracking-[0.12em] text-[#363739] uppercase">
+            SEC // 04 · CORE_CAPABILITIES
+          </div>
+        </div>
+      </div>
+
+      <div class="relative mx-auto max-w-[1200px] px-[24px]">
+        <div class="max-w-[640px]">
+          <p class="font-mono-tech text-[11px] font-medium uppercase leading-[0.91] tracking-[0.8px] text-[#6a6b6c]">
+            Core Capabilities
+          </p>
+          <h2 class="mt-[16px] text-[32px] font-normal leading-[1.15] tracking-normal text-[#ffffff]">
+            Dibangun untuk alur kerja yang nyata.
+          </h2>
+          <p class="mt-[16px] text-[16px] font-normal leading-[1.5] text-[#9c9c9d]">
+            Bukan sekadar hit endpoint: SonicPoint memahami kode, schema, dan data milikmu — lalu melaporkan apa adanya.
+          </p>
+        </div>
+
+        <div class="mt-[48px] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[16px]">
+          <!-- Feature 1 -->
+          <article class="ray-key-card">
+            <div class="flex items-start justify-between gap-[16px]">
+              <div class="ray-icon-orb">
+                <svg class="w-[24px] h-[24px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" />
+                  <path d="M8 12h8M8 9h5" />
+                </svg>
+              </div>
+              <span class="ray-badge text-[#9c9c9d]">AST Walker</span>
+            </div>
+            <h3 class="mt-[24px] text-[20px] font-medium leading-[1.2] tracking-[0.2px] text-[#ffffff]">
+              Scan dari AST
+            </h3>
+            <p class="mt-[8px] text-[16px] font-normal leading-[1.5] text-[#9c9c9d]">
+              Endpoint ditemukan dari kode: mount prefix diikuti, import relatif di-resolve, dan import melingkar tidak membuat scanner tersesat.
+            </p>
+          </article>
+
+          <!-- Feature 2 -->
+          <article class="ray-key-card-coral">
+            <div class="flex items-start justify-between gap-[16px]">
+              <div class="ray-icon-orb">
+                <svg class="w-[24px] h-[24px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 3v4M12 17v4M5 12H3M21 12h-2M6.3 6.3 4.9 4.9M19.1 19.1l-1.4-1.4M17.7 6.3l1.4-1.4M4.9 19.1l1.4-1.4" />
+                  <circle cx="12" cy="12" r="3.5" />
+                </svg>
+              </div>
+              <span class="ray-badge-ai">AI + Fallback</span>
+            </div>
+            <h3 class="mt-[24px] text-[20px] font-medium leading-[1.2] tracking-[0.2px] text-[#ffffff]">
+              Payload dari schema validasimu
+            </h3>
+            <p class="mt-[8px] text-[16px] font-normal leading-[1.5] text-[#9c9c9d]">
+              Joi, Zod, dan Yup dipindai menjadi field required/optional beserta constraint. AI mengisi payloadnya; tanpa AI, fallback deterministik tetap jalan.
+            </p>
+          </article>
+
+          <!-- Feature 3 -->
+          <article class="ray-key-card">
+            <div class="flex items-start justify-between gap-[16px]">
+              <div class="ray-icon-orb">
+                <svg class="w-[24px] h-[24px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1 1" />
+                  <path d="M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1-1" />
+                </svg>
+              </div>
+              <span class="ray-badge text-[#9c9c9d]">Live ID Cache</span>
+            </div>
+            <h3 class="mt-[24px] text-[20px] font-medium leading-[1.2] tracking-[0.2px] text-[#ffffff]">
+              Relasi yang tidak dikarang
+            </h3>
+            <p class="mt-[8px] text-[16px] font-normal leading-[1.5] text-[#9c9c9d]">
+              itemId dan lahanId disampel dari collection GET milikmu, di-cache sekali, lalu di-refresh otomatis saat terbukti basi. Nol data palsu.
+            </p>
+          </article>
+
+          <!-- Feature 4 -->
+          <article class="ray-key-card">
+            <div class="flex items-start justify-between gap-[16px]">
+              <div class="ray-icon-orb">
+                <svg class="w-[24px] h-[24px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="8" cy="15" r="3.5" />
+                  <path d="m10.5 12.5 7-7M15 5.5 17.5 8M17.5 3 20 5.5" />
+                </svg>
+              </div>
+              <span class="ray-badge text-[#9c9c9d]">Bearer Token</span>
+            </div>
+            <h3 class="mt-[24px] text-[20px] font-medium leading-[1.2] tracking-[0.2px] text-[#ffffff]">
+              Auth-aware
+            </h3>
+            <p class="mt-[8px] text-[16px] font-normal leading-[1.5] text-[#9c9c9d]">
+              Login sekali lewat login endpoint, token diambil dari tokenField, lalu dipakai sebagai Bearer di semua request — termasuk saat sampling.
+            </p>
+          </article>
+
+          <!-- Feature 5 -->
+          <article class="ray-key-card">
+            <div class="flex items-start justify-between gap-[16px]">
+              <div class="ray-icon-orb">
+                <svg class="w-[24px] h-[24px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4.5" width="18" height="15" rx="2" />
+                  <path d="m7 9.5 3 2.5-3 2.5M13 15h4" />
+                </svg>
+              </div>
+              <span class="ray-badge text-[#9c9c9d]">Unified REPL</span>
+            </div>
+            <h3 class="mt-[24px] text-[20px] font-medium leading-[1.2] tracking-[0.2px] text-[#ffffff]">
+              Satu prompt untuk semuanya
+            </h3>
+            <p class="mt-[8px] text-[16px] font-normal leading-[1.5] text-[#9c9c9d]">
+              /scan, /schema, /context, /test, /report, dan /config bekerja tanpa keluar dari REPL — memakai engine yang sama dengan command mode.
+            </p>
+          </article>
+
+          <!-- Feature 6 -->
+          <article class="ray-key-card-blue">
+            <div class="flex items-start justify-between gap-[16px]">
+              <div class="ray-icon-orb">
+                <svg class="w-[24px] h-[24px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 13v6a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-6" />
+                  <path d="M12 3v11M8 6.5 12 3l4 3.5" />
+                </svg>
+              </div>
+              <span class="ray-badge-blue">Swagger-like UI</span>
+            </div>
+            <h3 class="mt-[24px] text-[20px] font-medium leading-[1.2] tracking-[0.2px] text-[#ffffff]">
+              Laporan yang jujur
+            </h3>
+            <p class="mt-[8px] text-[16px] font-normal leading-[1.5] text-[#9c9c9d]">
+              Request body, respons, status, dan latensi per endpoint dalam satu halaman ala Swagger. Yang gagal ditulis gagal, yang di-skip menyebut alasannya.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── NEW SECTION: LIVE SHAREABLE REPORT VIEWER (Swagger-style) ───── -->
+    <section id="report-preview" class="relative overflow-hidden border-b border-[#363739]/60 py-[80px] sm:py-[120px]">
+      <!-- Clean Background Components for Live Report Preview -->
+      <div aria-hidden="true" class="pointer-events-none select-none absolute inset-0 overflow-hidden">
+        <div class="section-top-beam"></div>
+        <div class="bg-dot-matrix-clean absolute inset-0 opacity-75"></div>
+        <div class="absolute left-1/2 top-[60%] -translate-x-1/2 -translate-y-1/2 w-[860px] h-[360px] rounded-full bg-[#63a1ff]/[0.06] blur-[95px]"></div>
+        <div class="mx-auto max-w-[1248px] h-full relative">
+          <div class="rail-crosshair -top-[5px] -left-[6px]"></div>
+          <div class="rail-crosshair -top-[5px] -right-[6px]"></div>
+          <div class="hidden xl:block absolute top-[18px] left-[20px] font-mono-tech text-[10px] tracking-[0.12em] text-[#363739] uppercase">
+            SEC // 05 · HONEST_REPORT_VIEWER
+          </div>
+        </div>
+      </div>
+
+      <div class="relative mx-auto max-w-[1200px] px-[24px]">
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-[20px]">
+          <div class="max-w-[640px]">
+            <p class="font-mono-tech text-[11px] font-medium uppercase leading-[0.91] tracking-[0.8px] text-[#ff6363]">
+              Honest Web Report Preview
+            </p>
+            <h2 class="mt-[16px] text-[32px] font-normal leading-[1.15] text-[#ffffff]">
+              Hasil akhirnya: satu link laporan yang jujur &amp; transparan.
+            </h2>
+            <p class="mt-[14px] text-[16px] font-normal leading-[1.5] text-[#9c9c9d]">
+              Saat kamu menjalankan <code class="font-mono-tech text-[13px] text-[#e6e6e6]">sonic-point report</code>, rekan tim frontend atau QA bisa langsung membuka URL laporan ini—lengkap dengan payload yang dikirim, respons server, dan alasan skip. Klik baris di bawah untuk mencoba.
+            </p>
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="flex flex-wrap items-center gap-[6px]">
+            <button type="button" onclick="filterReport('ALL')" id="rep-filter-ALL" class="rounded-[6px] px-[10px] py-[5px] font-mono-tech text-[11px] bg-[#e6e6e6] text-[#040506] font-medium">
+              All (4)
+            </button>
+            <button type="button" onclick="filterReport('PASS')" id="rep-filter-PASS" class="rounded-[6px] px-[10px] py-[5px] font-mono-tech text-[11px] bg-[#111214] text-[#59d499] border border-[#2f3031] hover:border-[#454647]">
+              2xx Passed (2)
+            </button>
+            <button type="button" onclick="filterReport('FAIL')" id="rep-filter-FAIL" class="rounded-[6px] px-[10px] py-[5px] font-mono-tech text-[11px] bg-[#111214] text-[#ff6363] border border-[#2f3031] hover:border-[#454647]">
+              5xx Failed (1)
+            </button>
+            <button type="button" onclick="filterReport('SKIP')" id="rep-filter-SKIP" class="rounded-[6px] px-[10px] py-[5px] font-mono-tech text-[11px] bg-[#111214] text-[#ffbe5c] border border-[#2f3031] hover:border-[#454647]">
+              Skipped (1)
+            </button>
+          </div>
+        </div>
+
+        <!-- Browser Mockup for Published Report -->
+        <div class="mt-[36px] ray-window-frame p-[12px] sm:p-[20px]">
+          <!-- Browser Top Bar -->
+          <div class="flex flex-wrap items-center justify-between gap-[12px] pb-[14px] mb-[16px] border-b border-[#1b1c1e]">
+            <div class="flex items-center gap-[10px]">
+              <span class="w-[8px] h-[8px] rotate-45 bg-[#ff6363]"></span>
+              <span class="font-mono-tech text-[12px] text-[#ffffff]">report.sonicpoint.dev/s/sp_01J8K9M2X7V</span>
+              <span class="ray-badge text-[#59d499]">Public Read-Only</span>
+            </div>
+            <div class="font-mono-tech text-[11px] text-[#6a6b6c]">
+              Target: <span class="text-[#e6e6e6]">http://localhost:4000</span> · Duration: <span class="text-[#e6e6e6]">312ms</span>
+            </div>
+          </div>
+
+          <!-- Accordion Rows Container -->
+          <div id="report-accordion-list" class="space-y-[8px]">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── NEW SECTION: COMPARISON MATRIX (Mengapa Bukan Postman/Swagger) ── -->
+    <section class="relative overflow-hidden border-b border-[#363739]/60 py-[80px] sm:py-[120px]">
+      <!-- Clean Background Components for Comparison Matrix -->
+      <div aria-hidden="true" class="pointer-events-none select-none absolute inset-0 overflow-hidden">
+        <div class="section-top-beam"></div>
+        <div class="bg-tech-grid-clean absolute inset-0 opacity-50"></div>
+        <div class="mx-auto max-w-[1248px] h-full relative">
+          <div class="rail-crosshair -top-[5px] -left-[6px]"></div>
+          <div class="rail-crosshair -top-[5px] -right-[6px]"></div>
+          <div class="hidden xl:block absolute top-[18px] left-[20px] font-mono-tech text-[10px] tracking-[0.12em] text-[#363739] uppercase">
+            SEC // 06 · BENCHMARK_MATRIX
+          </div>
+        </div>
+      </div>
+
+      <div class="relative mx-auto max-w-[1200px] px-[24px]">
+        <div class="max-w-[640px]">
+          <p class="font-mono-tech text-[11px] font-medium uppercase leading-[0.91] tracking-[0.8px] text-[#6a6b6c]">
+            Workflow Comparison
+          </p>
+          <h2 class="mt-[16px] text-[32px] font-normal leading-[1.15] text-[#ffffff]">
+            Berhenti memelihara dua sumber kebenaran.
+          </h2>
+          <p class="mt-[14px] text-[16px] font-normal leading-[1.5] text-[#9c9c9d]">
+            Koleksi Postman cepat kedaluwarsa saat schema berubah, sedangkan anotasi OpenAPI memakan ratusan baris komentar di atas route Express-mu.
+          </p>
+        </div>
+
+        <div class="mt-[40px] overflow-x-auto rounded-[12px] border border-[#363739] bg-[#07080a]">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-[#2f3031] bg-[#111214] font-mono-tech text-[11px] uppercase tracking-[0.05em] text-[#9c9c9d]">
+                <th class="py-[14px] px-[20px]">Dimensi Pengujian</th>
+                <th class="py-[14px] px-[20px] text-[#ffffff]">
+                  <span class="inline-flex items-center gap-[6px]">
+                    <span class="w-[7px] h-[7px] rotate-45 bg-[#ff6363]"></span>
+                    SonicPoint CLI
+                  </span>
+                </th>
+                <th class="py-[14px] px-[20px]">Koleksi Postman / Bruno Manual</th>
+                <th class="py-[14px] px-[20px]">Swagger / OpenAPI JSDoc</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#1b1c1e] text-[14px]">
+              <tr>
+                <td class="py-[14px] px-[20px] font-medium text-[#e6e6e6]">Penemuan Endpoint</td>
+                <td class="py-[14px] px-[20px] text-[#59d499] font-mono-tech text-[12px]">Otomatis dari AST Express</td>
+                <td class="py-[14px] px-[20px] text-[#9c9c9d]">Input URL satu per satu</td>
+                <td class="py-[14px] px-[20px] text-[#9c9c9d]">Tulis komentar YAML manual</td>
+              </tr>
+              <tr>
+                <td class="py-[14px] px-[20px] font-medium text-[#e6e6e6]">Sinkronisasi Schema Validasi</td>
+                <td class="py-[14px] px-[20px] text-[#59d499] font-mono-tech text-[12px]">Langsung baca Joi / Zod / Yup</td>
+                <td class="py-[14px] px-[20px] text-[#9c9c9d]">Sering lupa di-update saat PR</td>
+                <td class="py-[14px] px-[20px] text-[#9c9c9d]">Duplikasi definisi schema</td>
+              </tr>
+              <tr>
+                <td class="py-[14px] px-[20px] font-medium text-[#e6e6e6]">Penanganan Foreign Key (<code class="font-mono-tech text-[12px]">*Id</code>)</td>
+                <td class="py-[14px] px-[20px] text-[#59d499] font-mono-tech text-[12px]">Auto-sample dari GET &amp; Cache</td>
+                <td class="py-[14px] px-[20px] text-[#9c9c9d]">Copy-paste ID manual antar tab</td>
+                <td class="py-[14px] px-[20px] text-[#9c9c9d]">Default string <code class="font-mono-tech text-[12px]">"string"</code> (Gagal 400)</td>
+              </tr>
+              <tr>
+                <td class="py-[14px] px-[20px] font-medium text-[#e6e6e6]">Berbagi Hasil Eksekusi</td>
+                <td class="py-[14px] px-[20px] text-[#59d499] font-mono-tech text-[12px]">1 perintah &rarr; Link publik jujur</td>
+                <td class="py-[14px] px-[20px] text-[#9c9c9d]">Export JSON / Screenshot</td>
+                <td class="py-[14px] px-[20px] text-[#9c9c9d]">Hanya dokumentasi statis</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── REPL EXTENSION TILES: Compact 8px Radius Grid ───────────────── -->
+    <section id="commands" class="relative overflow-hidden border-b border-[#363739]/60 py-[80px] sm:py-[96px]">
+      <!-- Clean Background Components for REPL Slash Commands -->
+      <div aria-hidden="true" class="pointer-events-none select-none absolute inset-0 overflow-hidden">
+        <div class="section-top-beam"></div>
+        <div class="bg-dot-matrix-clean absolute inset-0 opacity-65"></div>
+        <div class="mx-auto max-w-[1248px] h-full relative">
+          <div class="rail-crosshair -top-[5px] -left-[6px]"></div>
+          <div class="rail-crosshair -top-[5px] -right-[6px]"></div>
+          <div class="hidden xl:block absolute top-[18px] left-[20px] font-mono-tech text-[10px] tracking-[0.12em] text-[#363739] uppercase">
+            SEC // 07 · SLASH_EXTENSIONS
+          </div>
+        </div>
+      </div>
+
+      <div class="relative mx-auto max-w-[1200px] px-[24px]">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-[16px]">
+          <div>
+            <p class="font-mono-tech text-[11px] font-medium uppercase leading-[0.91] tracking-[0.8px] text-[#6a6b6c]">
+              Command Palette
+            </p>
+            <h2 class="mt-[16px] text-[24px] sm:text-[32px] font-normal leading-[1.15] text-[#ffffff]">
+              Slash commands di dalam REPL.
+            </h2>
+          </div>
+          <p class="font-mono-tech text-[12px] text-[#6a6b6c]">
+            Klik salah satu command untuk menyalin atau tekan <span class="ray-kbd">⌘K</span>
+          </p>
+        </div>
+
+        <div class="mt-[32px] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[8px]">
+          <button type="button" onclick="copyCmd('/scan', this)" class="text-left rounded-[8px] border border-[#363739] bg-[#07080a]/60 p-[10px] flex items-center justify-between gap-[12px] hover:border-[#ff6363]/60 hover:bg-[#111214] transition-all group">
+            <div class="flex items-center gap-[12px] min-w-0">
+              <div class="w-[36px] h-[36px] rounded-full bg-[#111214] flex items-center justify-center font-mono-tech text-[12px] text-[#ff6363] shrink-0 border border-[#2f3031]">
+                /sc
+              </div>
+              <div class="min-w-0">
+                <div class="text-[14px] font-medium text-[#ffffff] truncate">/scan</div>
+                <div class="text-[12px] font-normal text-[#6a6b6c] truncate">Telusuri ulang AST &amp; mount router Express</div>
+              </div>
+            </div>
+            <span class="font-mono-tech text-[10px] text-[#6a6b6c] group-hover:text-[#ffffff] shrink-0">Copy</span>
+          </button>
+
+          <button type="button" onclick="copyCmd('/schema', this)" class="text-left rounded-[8px] border border-[#363739] bg-[#07080a]/60 p-[10px] flex items-center justify-between gap-[12px] hover:border-[#ff6363]/60 hover:bg-[#111214] transition-all group">
+            <div class="flex items-center gap-[12px] min-w-0">
+              <div class="w-[36px] h-[36px] rounded-full bg-[#111214] flex items-center justify-center font-mono-tech text-[12px] text-[#63a1ff] shrink-0 border border-[#2f3031]">
+                /sh
+              </div>
+              <div class="min-w-0">
+                <div class="text-[14px] font-medium text-[#ffffff] truncate">/schema</div>
+                <div class="text-[12px] font-normal text-[#6a6b6c] truncate">Inspeksi constraint Joi, Zod, atau Yup</div>
+              </div>
+            </div>
+            <span class="font-mono-tech text-[10px] text-[#6a6b6c] group-hover:text-[#ffffff] shrink-0">Copy</span>
+          </button>
+
+          <button type="button" onclick="copyCmd('/context', this)" class="text-left rounded-[8px] border border-[#363739] bg-[#07080a]/60 p-[10px] flex items-center justify-between gap-[12px] hover:border-[#ff6363]/60 hover:bg-[#111214] transition-all group">
+            <div class="flex items-center gap-[12px] min-w-0">
+              <div class="w-[36px] h-[36px] rounded-full bg-[#111214] flex items-center justify-center font-mono-tech text-[12px] text-[#59d499] shrink-0 border border-[#2f3031]">
+                /cx
+              </div>
+              <div class="min-w-0">
+                <div class="text-[14px] font-medium text-[#ffffff] truncate">/context</div>
+                <div class="text-[12px] font-normal text-[#6a6b6c] truncate">Lihat cache ID relasi hasil sampling GET</div>
+              </div>
+            </div>
+            <span class="font-mono-tech text-[10px] text-[#6a6b6c] group-hover:text-[#ffffff] shrink-0">Copy</span>
+          </button>
+
+          <button type="button" onclick="copyCmd('/test', this)" class="text-left rounded-[8px] border border-[#363739] bg-[#07080a]/60 p-[10px] flex items-center justify-between gap-[12px] hover:border-[#ff6363]/60 hover:bg-[#111214] transition-all group">
+            <div class="flex items-center gap-[12px] min-w-0">
+              <div class="w-[36px] h-[36px] rounded-full bg-[#111214] flex items-center justify-center font-mono-tech text-[12px] text-[#ffbe5c] shrink-0 border border-[#2f3031]">
+                /ts
+              </div>
+              <div class="min-w-0">
+                <div class="text-[14px] font-medium text-[#ffffff] truncate">/test</div>
+                <div class="text-[12px] font-normal text-[#6a6b6c] truncate">Eksekusi pengujian penuh atau per-endpoint</div>
+              </div>
+            </div>
+            <span class="font-mono-tech text-[10px] text-[#6a6b6c] group-hover:text-[#ffffff] shrink-0">Copy</span>
+          </button>
+
+          <button type="button" onclick="copyCmd('/report', this)" class="text-left rounded-[8px] border border-[#363739] bg-[#07080a]/60 p-[10px] flex items-center justify-between gap-[12px] hover:border-[#ff6363]/60 hover:bg-[#111214] transition-all group">
+            <div class="flex items-center gap-[12px] min-w-0">
+              <div class="w-[36px] h-[36px] rounded-full bg-[#111214] flex items-center justify-center font-mono-tech text-[12px] text-[#e6e6e6] shrink-0 border border-[#2f3031]">
+                /rp
+              </div>
+              <div class="min-w-0">
+                <div class="text-[14px] font-medium text-[#ffffff] truncate">/report</div>
+                <div class="text-[12px] font-normal text-[#6a6b6c] truncate">Terbitkan laporan sesi ke URL publik</div>
+              </div>
+            </div>
+            <span class="font-mono-tech text-[10px] text-[#6a6b6c] group-hover:text-[#ffffff] shrink-0">Copy</span>
+          </button>
+
+          <button type="button" onclick="copyCmd('/config', this)" class="text-left rounded-[8px] border border-[#363739] bg-[#07080a]/60 p-[10px] flex items-center justify-between gap-[12px] hover:border-[#ff6363]/60 hover:bg-[#111214] transition-all group">
+            <div class="flex items-center gap-[12px] min-w-0">
+              <div class="w-[36px] h-[36px] rounded-full bg-[#111214] flex items-center justify-center font-mono-tech text-[12px] text-[#e6e6e6] shrink-0 border border-[#2f3031]">
+                /cf
+              </div>
+              <div class="min-w-0">
+                <div class="text-[14px] font-medium text-[#ffffff] truncate">/config</div>
+                <div class="text-[12px] font-normal text-[#6a6b6c] truncate">Atur baseUrl, login endpoint, &amp; tokenField</div>
+              </div>
+            </div>
+            <span class="font-mono-tech text-[10px] text-[#6a6b6c] group-hover:text-[#ffffff] shrink-0">Copy</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── NEW SECTION: INTERACTIVE FAQ & HONEST LIMITATIONS ───────────── -->
+    <section id="faq" class="relative overflow-hidden border-b border-[#363739]/60 py-[80px] sm:py-[120px]">
+      <!-- Clean Background Components for FAQ -->
+      <div aria-hidden="true" class="pointer-events-none select-none absolute inset-0 overflow-hidden">
+        <div class="section-top-beam"></div>
+        <div class="bg-dot-matrix-clean absolute inset-0 opacity-60"></div>
+        <div class="mx-auto max-w-[1248px] h-full relative">
+          <div class="rail-crosshair -top-[5px] -left-[6px]"></div>
+          <div class="rail-crosshair -top-[5px] -right-[6px]"></div>
+          <div class="hidden xl:block absolute top-[18px] left-[20px] font-mono-tech text-[10px] tracking-[0.12em] text-[#363739] uppercase">
+            SEC // 09 · TRANSPARENCY_FAQ
+          </div>
+        </div>
+      </div>
+
+      <div class="relative mx-auto max-w-[1200px] px-[24px]">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-[32px]">
+          <div class="lg:col-span-5">
+            <p class="font-mono-tech text-[11px] font-medium uppercase leading-[0.91] tracking-[0.8px] text-[#6a6b6c]">
+              Transparency &amp; Docs
+            </p>
+            <h2 class="mt-[16px] text-[32px] font-normal leading-[1.15] text-[#ffffff]">
+              Pertanyaan umum &amp; batasan yang kami akui.
+            </h2>
+            <p class="mt-[16px] text-[16px] font-normal leading-[1.55] text-[#9c9c9d]">
+              Kami percaya developer tool harus jujur soal apa yang sudah bisa dilakukan dengan sangat baik dan batasan arsitektur saat ini.
+            </p>
+
+            <div class="mt-[24px] rounded-[12px] bg-[#111214] border border-[#2f3031] p-[16px]">
+              <div class="font-mono-tech text-[11px] uppercase tracking-[0.05em] text-[#ffbe5c]">Batasan Saat Ini (v1.4.2)</div>
+              <ul class="mt-[10px] space-y-[8px] text-[13px] text-[#9c9c9d]">
+                <li>• Fokus penuh pada ekosistem <span class="text-[#ffffff]">Express.js</span> (Fastify &amp; Hono masih dalam roadmap).</li>
+                <li>• Resolusi modul mengutamakan import relatif standar &amp; path alias TypeScript dasar.</li>
+                <li>• Endpoint upload multipart/binary dilewati secara default kecuali dikonfigurasi.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="lg:col-span-7 space-y-[10px]" id="faq-container">
+            <!-- FAQ Item 1 -->
+            <div class="rounded-[12px] border border-[#363739] bg-[#07080a] overflow-hidden">
+              <button type="button" onclick="toggleFaq(0)" class="w-full px-[20px] py-[16px] text-left flex items-center justify-between gap-[16px] hover:bg-[#111214] transition-colors">
+                <span class="text-[15px] font-medium text-[#ffffff]">Bagaimana jika saya tidak mengatur API Key AI? Apakah tetap jalan?</span>
+                <span id="faq-icon-0" class="font-mono-tech text-[16px] text-[#9c9c9d]">−</span>
+              </button>
+              <div id="faq-body-0" class="px-[20px] pb-[18px] text-[14px] leading-[1.6] text-[#9c9c9d] border-t border-[#1b1c1e] pt-[12px]">
+                Tetap jalan 100%. SonicPoint memiliki <span class="text-[#e6e6e6]">Deterministic Fallback Generator</span> yang membaca tipe data, panjang minimal/maksimal, regex, enum, dan format email langsung dari AST Joi/Zod/Yup tanpa memanggil LLM sama sekali.
+              </div>
+            </div>
+
+            <!-- FAQ Item 2 -->
+            <div class="rounded-[12px] border border-[#363739] bg-[#07080a] overflow-hidden">
+              <button type="button" onclick="toggleFaq(1)" class="w-full px-[20px] py-[16px] text-left flex items-center justify-between gap-[16px] hover:bg-[#111214] transition-colors">
+                <span class="text-[15px] font-medium text-[#ffffff]">Apakah aman dijalankan di database staging? Bagaimana dengan endpoint DELETE?</span>
+                <span id="faq-icon-1" class="font-mono-tech text-[16px] text-[#9c9c9d]">+</span>
+              </button>
+              <div id="faq-body-1" class="hidden px-[20px] pb-[18px] text-[14px] leading-[1.6] text-[#9c9c9d] border-t border-[#1b1c1e] pt-[12px]">
+                Secara default, SonicPoint menyalakan guard <code class="font-mono-tech text-[12px] text-[#e6e6e6]">skipDelete: true</code>. Semua route <code class="font-mono-tech text-[12px] text-[#ff6363]">DELETE</code> akan dicatat di laporan sebagai <code class="font-mono-tech text-[12px] text-[#ffbe5c]">SKIPPED</code> beserta alasan eksplisit agar tidak menghapus data referensi yang sedang dipakai sampling.
+              </div>
+            </div>
+
+            <!-- FAQ Item 3 -->
+            <div class="rounded-[12px] border border-[#363739] bg-[#07080a] overflow-hidden">
+              <button type="button" onclick="toggleFaq(2)" class="w-full px-[20px] py-[16px] text-left flex items-center justify-between gap-[16px] hover:bg-[#111214] transition-colors">
+                <span class="text-[15px] font-medium text-[#ffffff]">Bagaimana SonicPoint tahu field mana yang merupakan ID relasi?</span>
+                <span id="faq-icon-2" class="font-mono-tech text-[16px] text-[#9c9c9d]">+</span>
+              </button>
+              <div id="faq-body-2" class="hidden px-[20px] pb-[18px] text-[14px] leading-[1.6] text-[#9c9c9d] border-t border-[#1b1c1e] pt-[12px]">
+                Engine mencocokkan nama field pada schema atau parameter URL (misalnya <code class="font-mono-tech text-[12px] text-[#e6e6e6]">lahanId</code>, <code class="font-mono-tech text-[12px] text-[#e6e6e6]">user_id</code>, atau <code class="font-mono-tech text-[12px] text-[#e6e6e6]">:itemId</code>) terhadap daftar route koleksi <code class="font-mono-tech text-[12px] text-[#e6e6e6]">GET</code> yang ditemukan saat proses AST scan, lalu menyampel respons array/pagination-nya.
+              </div>
+            </div>
+
+            <!-- FAQ Item 4 -->
+            <div class="rounded-[12px] border border-[#363739] bg-[#07080a] overflow-hidden">
+              <button type="button" onclick="toggleFaq(3)" class="w-full px-[20px] py-[16px] text-left flex items-center justify-between gap-[16px] hover:bg-[#111214] transition-colors">
+                <span class="text-[15px] font-medium text-[#ffffff]">Apakah kode sumber aplikasi saya diunggah saat menjalankan /report?</span>
+                <span id="faq-icon-3" class="font-mono-tech text-[16px] text-[#9c9c9d]">+</span>
+              </button>
+              <div id="faq-body-3" class="hidden px-[20px] pb-[18px] text-[14px] leading-[1.6] text-[#9c9c9d] border-t border-[#1b1c1e] pt-[12px]">
+                Tidak. AST parsing terjadi 100% lokal di mesinmu. Yang diterbitkan ke link laporan hanyalah metadata rute, payload uji, status HTTP, latensi, dan potongan respons JSON (dengan header sensitif yang disamarkan).
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── BOTTOM CTA SECTION ──────────────────────────────────────────── -->
+    <section class="py-[96px] sm:py-[120px] text-center relative overflow-hidden">
+      <!-- Clean Atmospheric Horizon Glow + Grid for Bottom CTA -->
+      <div aria-hidden="true" class="pointer-events-none select-none absolute inset-0 overflow-hidden">
+        <div class="section-top-beam"></div>
+        <div class="bg-tech-grid-clean absolute inset-0 opacity-75"></div>
+        <div class="hero-blue-wash absolute left-1/2 top-[75%] w-[920px] h-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60"></div>
+        <div class="hero-coral-bar-1 absolute left-1/2 top-[65%] w-[620px] h-[110px] rounded-full opacity-55"></div>
+        <div class="mx-auto max-w-[1248px] h-full relative">
+          <div class="rail-crosshair -top-[5px] -left-[6px]"></div>
+          <div class="rail-crosshair -top-[5px] -right-[6px]"></div>
+        </div>
+      </div>
+
+      <div class="mx-auto max-w-[1200px] px-[24px] relative">
+        <h2 class="text-[32px] sm:text-[56px] font-normal leading-[1.15] sm:leading-[1.17] tracking-[0.22px] text-[#ffffff]">
+          Siap mencoba di repo Express-mu?
+        </h2>
+        <p class="mx-auto mt-[16px] max-w-[460px] text-[16px] font-normal leading-[1.5] text-[#9c9c9d]">
+          Instal secara global atau jalankan via npx, arahkan ke aplikasimu, dan bagikan laporan pertamamu dalam hitungan detik.
+        </p>
+
+        <div class="mt-[32px] flex flex-wrap items-center justify-center gap-[8px]">
+          <button type="button" onclick="copyInstallCommand('footer')" class="ray-btn-primary">
+            <span id="footer-copy-label">Quickstart — Copy npm install</span>
+          </button>
+
+          <a href="https://github.com" target="_blank" rel="noreferrer" class="ray-btn-ghost">
+            Lihat di GitHub
+          </a>
+        </div>
+
+        <div class="mt-[24px] flex flex-wrap items-center justify-center gap-[8px] font-mono-tech text-[12px] tracking-[0.017em] text-[#6a6b6c]">
+          <span>$ npm install -g sonic-point</span>
+          <span aria-hidden="true" class="text-[#2f3031]">|</span>
+          <span>MIT License</span>
+          <span aria-hidden="true" class="text-[#2f3031]">|</span>
+          <span>SonicPoint CLI v1.4.2</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ── FOOTER ────────────────────────────────────────────────────────── -->
+  <footer class="border-t border-[#363739]/60 py-[32px]">
+    <div class="mx-auto max-w-[1200px] px-[24px] flex flex-col sm:flex-row items-center justify-between gap-[16px]">
+      <div class="flex items-center gap-[8px] text-[13px] font-medium text-[#9c9c9d]">
+        <span class="w-[8px] h-[8px] rotate-45 bg-[#ff6363]"></span>
+        <span class="text-[#ffffff]">SonicPoint</span>
+        <span class="text-[#6a6b6c]">— Express AST API Tester</span>
+      </div>
+      <div class="font-mono-tech text-[12px] text-[#6a6b6c]">
+        v1.4.2 <span class="mx-[6px] text-[#2f3031]">|</span> Express.js · Joi · Zod · Yup
+      </div>
+    </div>
+  </footer>
+
+  <!-- ── RAYCAST-STYLE COMMAND PALETTE MODAL (⌘K) ──────────────────────── -->
+  <div id="cmd-modal" class="fixed inset-0 z-50 hidden items-start justify-center pt-[12vh] px-[16px] bg-[#040506]/80 backdrop-blur-md">
+    <div class="ray-window-frame w-full max-w-[580px] overflow-hidden border border-[#363739]">
+      <div class="flex items-center gap-[10px] px-[16px] py-[12px] border-b border-[#2f3031] bg-[#111214]">
+        <svg class="w-[15px] h-[15px] text-[#ff6363]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <input
+          id="cmd-search-input"
+          type="text"
+          placeholder="Ketik perintah SonicPoint atau lompat ke bagian..."
+          oninput="filterModalCommands(this.value)"
+          class="w-full bg-transparent font-mono-tech text-[13px] text-[#ffffff] placeholder-[#6a6b6c] focus:outline-none"
+        />
+        <button type="button" onclick="closeCommandModal()" class="ray-kbd !text-[10px]">ESC</button>
+      </div>
+      <div id="cmd-modal-list" class="max-h-[320px] overflow-y-auto p-[8px] space-y-[4px] bg-[#07080a]">
+        <!-- Populated dynamically -->
+      </div>
+      <div class="px-[16px] py-[8px] bg-[#111214] border-t border-[#2f3031] flex items-center justify-between font-mono-tech text-[11px] text-[#6a6b6c]">
+        <span>SonicPoint Command Launcher</span>
+        <span>Klik item untuk eksekusi</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentInstallCmd = "npm install -g sonic-point";
+
+    const pkgCommands = {
+      npm: "npm install -g sonic-point",
+      pnpm: "pnpm add -g sonic-point",
+      bun: "bun add -g sonic-point",
+      npx: "npx sonic-point@latest send"
+    };
+
+    function setPkgManager(pkg) {
+      currentInstallCmd = pkgCommands[pkg] || pkgCommands.npm;
+      document.getElementById("install-cmd-text").textContent = currentInstallCmd;
+      ["npm", "pnpm", "bun", "npx"].forEach((key) => {
+        const btn = document.getElementById(`pkg-${key}`);
+        if (key === pkg) {
+          btn.className = "pkg-tab rounded-[5px] px-[8px] py-[2px] font-mono-tech text-[11px] bg-[#1b1c1e] text-[#ffffff] border border-[#363739]";
+        } else {
+          btn.className = "pkg-tab rounded-[5px] px-[8px] py-[2px] font-mono-tech text-[11px] text-[#6a6b6c] hover:text-[#ffffff] border border-transparent";
+        }
+      });
+    }
+
+    const endpointsData = [
+      {
+        id: 0,
+        method: "POST",
+        path: "/api/v1/auth/login",
+        schema: "Zod · loginSchema",
+        status: "200 OK",
+        latency: "38ms",
+        detail: [
+          "<span class='text-[#ffffff]'>$ sonic-point send --only /api/v1/auth/login</span>",
+          "• Resolved mount prefix <span class='text-[#e6e6e6]'>/api/v1/auth</span> from <span class='text-[#e6e6e6]'>src/app.ts</span>",
+          "• Parsed Zod schema: <span class='text-[#e6e6e6]'>email (string, email), password (string, min:8)</span>",
+          "• Authenticated &amp; extracted <span class='text-[#e6e6e6]'>data.accessToken</span> &rarr; cached as Bearer token",
+          "<span class='text-[#59d499]'>✓ 200 OK</span> in 38ms — Token ready for downstream sampling"
+        ],
+        jsonPreview: `// Extracted Auth Token Context\n{ "status": "authenticated", "tokenField": "data.accessToken", "bearer": "eyJhbGciOiJIUzI1NiIs..." }`
+      },
+      {
+        id: 1,
+        method: "GET",
+        path: "/api/v1/lahan",
+        schema: "Query · paginationSchema",
+        status: "200 OK",
+        latency: "24ms",
+        detail: [
+          "<span class='text-[#ffffff]'>$ sonic-point context --sample /api/v1/lahan</span>",
+          "• Sampling collection GET with Bearer token...",
+          "• Extracted 14 valid relational IDs for <span class='text-[#e6e6e6]'>lahanId</span>",
+          "• Cached sample: <span class='text-[#e6e6e6]'>\"lhn_01H9X8K2P9\"</span> (TTL: active session)",
+          "<span class='text-[#59d499]'>✓ 200 OK</span> in 24ms — Zero fake UUIDs needed"
+        ],
+        jsonPreview: `// Cached Relational IDs from GET /api/v1/lahan\n{ "resource": "lahan", "key": "lahanId", "samples": ["lhn_01H9X8K2P9", "lhn_01H9X8M4R2", "+12 more"] }`
+      },
+      {
+        id: 2,
+        method: "POST",
+        path: "/api/v1/panen",
+        schema: "Joi · createPanenSchema",
+        status: "201 Created",
+        latency: "61ms",
+        detail: [
+          "<span class='text-[#ffffff]'>$ sonic-point send /api/v1/panen</span>",
+          "• Schema constraints: <span class='text-[#e6e6e6]'>lahanId (required), beratKg (number, min:1), tanggal (isoDate)</span>",
+          "• Injected real <span class='text-[#e6e6e6]'>lahanId: \"lhn_01H9X8K2P9\"</span> from GET /api/v1/lahan cache",
+          "• AI synthesized realistic payload matching Joi rules",
+          "<span class='text-[#59d499]'>✓ 201 Created</span> in 61ms — Response recorded to session report"
+        ],
+        jsonPreview: `// Request Payload Sent -> POST /api/v1/panen\n{ "lahanId": "lhn_01H9X8K2P9", "beratKg": 420, "tanggal": "2025-05-12T08:30:00.000Z" }`
+      },
+      {
+        id: 3,
+        method: "PATCH",
+        path: "/api/v1/items/:itemId",
+        schema: "Yup · updateItemSchema",
+        status: "200 OK",
+        latency: "44ms",
+        detail: [
+          "<span class='text-[#ffffff]'>$ sonic-point send /api/v1/items/:itemId</span>",
+          "• Replaced path param <span class='text-[#e6e6e6]'>:itemId</span> with live sample <span class='text-[#e6e6e6]'>\"itm_88412\"</span>",
+          "• Validated optional fields &amp; numeric constraints via Yup AST parser",
+          "<span class='text-[#59d499]'>✓ 200 OK</span> in 44ms — State mutation verified"
+        ],
+        jsonPreview: `// Resolved URL: PATCH /api/v1/items/itm_88412\n{ "nama": "Pupuk Organik Granul", "stokMinimum": 25, "aktif": true }`
+      },
+      {
+        id: 4,
+        method: "DELETE",
+        path: "/api/v1/items/:itemId",
+        schema: "Auth · requireRole('admin')",
+        status: "SKIPPED",
+        latency: "0ms",
+        detail: [
+          "<span class='text-[#ffffff]'>$ sonic-point send /api/v1/items/:itemId</span>",
+          "• Destructive endpoint guard active (<span class='text-[#e6e6e6]'>--safe-mode</span>)",
+          "• Marked as <span class='text-[#ffbe5c]'>SKIPPED</span> in final report with explicit reason:",
+          "  <span class='text-[#9c9c9d]'>\"Skipped destructive DELETE without --allow-delete flag\"</span>"
+        ],
+        jsonPreview: `// Honest Report Entry\n{ "status": "SKIPPED", "reason": "Destructive route guarded by safety.skipDelete = true" }`
+      }
+    ];
+
+    const tabPresets = {
+      scan: {
+        prompt: "sonic-point > /scan",
+        heading: "AST Router Scanner",
+        badge: "6 Endpoints Found",
+        status: "AST Scan Complete · 0 circular traps",
+        lines: [
+          "<span class='text-[#ffffff]'>$ sonic-point /scan</span>",
+          "• Entrypoint detected: <span class='text-[#e6e6e6]'>src/server.ts</span> &rarr; <span class='text-[#e6e6e6]'>src/routes/index.ts</span>",
+          "• Following relative imports &amp; nested <span class='text-[#e6e6e6]'>router.use('/v1', v1Router)</span> prefixes",
+          "• Discovered <span class='text-[#ffffff]'>18 routes</span> across 5 controller modules (Joi, Zod, Yup)",
+          "• Pilih baris endpoint di panel kiri untuk melihat detail eksekusi."
+        ],
+        json: `// AST Graph Summary\n{ "filesParsed": 23, "circularImportsIgnored": 2, "validators": ["zod", "joi", "yup"] }`
+      },
+      schema: {
+        prompt: "sonic-point > /schema POST /api/v1/panen",
+        heading: "Validation Schema AST Inspector",
+        badge: "Joi + Zod + Yup",
+        status: "Schema Resolved · Deterministic fallback ready",
+        lines: [
+          "<span class='text-[#ffffff]'>$ sonic-point /schema POST /api/v1/panen</span>",
+          "• Validator: <span class='text-[#e6e6e6]'>Joi.object()</span> at <span class='text-[#e6e6e6]'>src/validators/panen.validator.ts:14</span>",
+          "  ├─ <span class='text-[#ffffff]'>lahanId</span>: string · required · relational (sampled from GET /api/v1/lahan)",
+          "  ├─ <span class='text-[#ffffff]'>beratKg</span>: number · required · min(1) · max(5000)",
+          "  └─ <span class='text-[#ffffff]'>catatan</span>: string · optional · max(140)",
+          "• Payload generator: <span class='text-[#e6e6e6]'>AI Enabled</span> (fallback deterministic active)"
+        ],
+        json: `// Normalized Schema Descriptor\n{ "lahanId": { "type": "string", "ref": "/api/v1/lahan" }, "beratKg": { "type": "number", "min": 1, "max": 5000 } }`
+      },
+      context: {
+        prompt: "sonic-point > /context",
+        heading: "Relational ID Session Cache",
+        badge: "36 Live IDs Cached",
+        status: "Cache Healthy · Auto-refresh on 404 enabled",
+        lines: [
+          "<span class='text-[#ffffff]'>$ sonic-point /context</span>",
+          "• Active Bearer Token: <span class='text-[#59d499]'>Valid (expires in 54m)</span>",
+          "• <span class='text-[#ffffff]'>lahanId</span> (from GET /api/v1/lahan): <span class='text-[#e6e6e6]'>14 IDs cached</span>",
+          "• <span class='text-[#ffffff]'>itemId</span> (from GET /api/v1/items): <span class='text-[#e6e6e6]'>22 IDs cached</span>",
+          "• Zero synthetic/random UUIDs will be used during /test."
+        ],
+        json: `// Live Context Store\n{ "lahanId": ["lhn_01H9X8K2P9", "lhn_01H9X8M4R2"], "itemId": ["itm_88412", "itm_88419"] }`
+      },
+      test: {
+        prompt: "sonic-point > /test --all",
+        heading: "Live Contract Execution",
+        badge: "Bearer Auth Active",
+        status: "16 Passed · 1 Failed · 1 Skipped",
+        lines: [
+          "<span class='text-[#ffffff]'>$ sonic-point /test</span>",
+          "• Logging in via <span class='text-[#e6e6e6]'>POST /api/v1/auth/login</span> &rarr; tokenField <span class='text-[#e6e6e6]'>data.accessToken</span>",
+          "• Pre-sampling relational IDs: <span class='text-[#e6e6e6]'>itemId (22)</span>, <span class='text-[#e6e6e6]'>lahanId (14)</span>",
+          "• Executing 18 endpoints sequentially with real relational context...",
+          "• <span class='text-[#59d499]'>16 passed</span>, <span class='text-[#ff6363]'>1 failed (500 on PUT /api/v1/stok)</span>, <span class='text-[#ffbe5c]'>1 skipped (reason logged)</span>"
+        ],
+        json: `// Execution Summary\n{ "total": 18, "passed": 16, "failed": 1, "skipped": 1, "durationMs": 312 }`
+      },
+      report: {
+        prompt: "sonic-point > /report",
+        heading: "Honest Swagger-style Report",
+        badge: "Shareable URL",
+        status: "Published · Includes request, response & latency",
+        lines: [
+          "<span class='text-[#ffffff]'>$ sonic-point /report</span>",
+          "• Bundling request payloads, response bodies, HTTP status &amp; latency...",
+          "• Honest reporting: failed endpoints retain stack hint; skipped routes show exact guard reason.",
+          "• Published session link:",
+          "  <span class='text-[#63a1ff] underline decoration-[#363739] underline-offset-4'>https://report.sonicpoint.dev/s/sp_01J8K9M2X7V</span>"
+        ],
+        json: `// Report Artifact Published\n{ "reportId": "sp_01J8K9M2X7V", "url": "https://report.sonicpoint.dev/s/sp_01J8K9M2X7V", "public": true }`
+      }
+    };
+
+    // Validator Lab Data (Zod / Joi / Yup)
+    const validatorLabData = {
+      zod: {
+        file: "src/routes/panen.zod.ts",
+        source: `const createPanenSchema = z.object({\n  lahanId: z.string().uuid(),\n  komoditas: z.enum(["PADI", "JAGUNG", "TEBU"]),\n  beratKg: z.number().int().min(10).max(5000),\n  kadarAir: z.number().min(8).max(30).optional()\n});\n\nrouter.post("/panen", validate(createPanenSchema), ctrl);`,
+        ast: `Endpoint : POST /api/v1/panen\nValidator: ZodObject (4 properties)\n\n• lahanId   [required] string (uuid) -> Relational Ref\n• komoditas [required] enum("PADI"|"JAGUNG"|"TEBU")\n• beratKg   [required] number (int, min:10, max:5000)\n• kadarAir  [optional] number (min:8, max:30)`,
+        payload: `{\n  "lahanId": "lhn_01H9X8K2P9",\n  "komoditas": "PADI",\n  "beratKg": 1240,\n  "kadarAir": 14.2\n}`
+      },
+      joi: {
+        file: "src/routes/panen.joi.js",
+        source: `const createPanenSchema = Joi.object({\n  lahanId: Joi.string().required(),\n  komoditas: Joi.string().valid("PADI", "JAGUNG").required(),\n  beratKg: Joi.number().min(10).max(5000).required(),\n  catatan: Joi.string().max(120).optional()\n});\n\nrouter.post("/panen", validateBody(createPanenSchema), ctrl);`,
+        ast: `Endpoint : POST /api/v1/panen\nValidator: Joi.object (4 keys)\n\n• lahanId   [required] string -> Sampled from GET /lahan\n• komoditas [required] valid("PADI", "JAGUNG")\n• beratKg   [required] number (min:10, max:5000)\n• catatan   [optional] string (max:120)`,
+        payload: `{\n  "lahanId": "lhn_01H9X8K2P9",\n  "komoditas": "JAGUNG",\n  "beratKg": 850,\n  "catatan": "Panen blok selatan kondisi cerah"\n}`
+      },
+      yup: {
+        file: "src/routes/panen.yup.ts",
+        source: `const createPanenSchema = yup.object({\n  lahanId: yup.string().required(),\n  beratKg: yup.number().positive().min(10).required(),\n  petugasEmail: yup.string().email().required(),\n  terverifikasi: yup.boolean().default(true)\n});\n\nrouter.post("/panen", useYup(createPanenSchema), ctrl);`,
+        ast: `Endpoint : POST /api/v1/panen\nValidator: Yup.object (4 fields)\n\n• lahanId       [required] string -> Sampled from GET /lahan\n• beratKg       [required] number (positive, min:10)\n• petugasEmail  [required] string (format: email)\n• terverifikasi [optional] boolean (default: true)`,
+        payload: `{\n  "lahanId": "lhn_01H9X8K2P9",\n  "beratKg": 620,\n  "petugasEmail": "mandor.blok4@kebun.id",\n  "terverifikasi": true\n}`
+      }
+    };
+
+    // Live Report Accordion Data
+    const reportItems = [
+      {
+        id: "rep-1",
+        category: "PASS",
+        method: "POST",
+        path: "/api/v1/panen",
+        statusBadge: "201 Created",
+        statusColor: "text-[#59d499] bg-[#59d499]/10 border-[#59d499]/30",
+        latency: "61ms",
+        summary: "Created harvest record using sampled lahanId",
+        reqBody: `{\n  "lahanId": "lhn_01H9X8K2P9",\n  "beratKg": 420,\n  "tanggal": "2025-05-12T08:30:00.000Z"\n}`,
+        resBody: `{\n  "success": true,\n  "data": {\n    "id": "pnn_99201",\n    "lahanId": "lhn_01H9X8K2P9",\n    "beratKg": 420\n  }\n}`
+      },
+      {
+        id: "rep-2",
+        category: "PASS",
+        method: "PATCH",
+        path: "/api/v1/items/itm_88412",
+        statusBadge: "200 OK",
+        statusColor: "text-[#59d499] bg-[#59d499]/10 border-[#59d499]/30",
+        latency: "44ms",
+        summary: "Updated inventory item via Yup schema contract",
+        reqBody: `{\n  "nama": "Pupuk Organik Granul",\n  "stokMinimum": 25\n}`,
+        resBody: `{\n  "success": true,\n  "updatedAt": "2025-05-12T08:30:01.104Z"\n}`
+      },
+      {
+        id: "rep-3",
+        category: "FAIL",
+        method: "PUT",
+        path: "/api/v1/stok/recalculate",
+        statusBadge: "500 Internal Error",
+        statusColor: "text-[#ff6363] bg-[#ff6363]/15 border-[#ff6363]/40",
+        latency: "183ms",
+        summary: "Honest Failure: Unhandled null pointer in warehouse service",
+        reqBody: `{\n  "gudangId": "gdg_01H4Z9",\n  "forceSync": true\n}`,
+        resBody: `{\n  "error": "InternalServerError",\n  "message": "Cannot read properties of null (reading 'kapasitasMaks')",\n  "hint": "src/services/stok.service.ts:88"\n}`
+      },
+      {
+        id: "rep-4",
+        category: "SKIP",
+        method: "DELETE",
+        path: "/api/v1/items/:itemId",
+        statusBadge: "SKIPPED",
+        statusColor: "text-[#ffbe5c] bg-[#ffbe5c]/15 border-[#ffbe5c]/40",
+        latency: "0ms",
+        summary: "Skipped destructive DELETE route (--safe-mode active)",
+        reqBody: `// No request sent (Guarded by safety.skipDelete = true)`,
+        resBody: `// Reason logged to report: Pass --allow-delete to execute destructive routes.`
+      }
+    ];
+
+    let activeEndpointId = 2;
+    let activeReportFilter = "ALL";
+    let expandedReportId = "rep-1";
+
+    function renderEndpointList() {
+      const container = document.getElementById("endpoint-list");
+      container.innerHTML = endpointsData
+        .map((ep, idx) => {
+          const isSelected = ep.id === activeEndpointId;
+          const rowClass = isSelected
+            ? "bg-[#ff6363]/15 border border-[#ff6363]/60 text-[#ffffff]"
+            : "bg-transparent border border-transparent text-[#9c9c9d] hover:bg-[#111214] hover:text-[#ffffff]";
+          const dotClass = isSelected ? "bg-[#ff6363]" : "bg-[#2f3031]";
+
+          return `
+            <button
+              type="button"
+              onclick="selectEndpoint(${ep.id})"
+              class="w-full text-left rounded-[8px] px-[10px] py-[8px] transition-all flex items-center justify-between gap-[8px] ${rowClass}"
+            >
+              <div class="flex items-center gap-[8px] min-w-0">
+                <span class="w-[6px] h-[6px] rounded-full shrink-0 ${dotClass}"></span>
+                <span class="font-mono-tech text-[10px] uppercase tracking-[0.05em] px-[5px] py-[1px] rounded-[4px] bg-[#1b1c1e] text-[#e6e6e6] shrink-0">${ep.method}</span>
+                <span class="font-mono-tech text-[12px] truncate">${ep.path}</span>
+              </div>
+              <div class="flex items-center gap-[6px] shrink-0">
+                <span class="font-mono-tech text-[10px] text-[#6a6b6c]">${ep.latency}</span>
+                <span class="ray-kbd !text-[9px] !px-[4px] !py-[0px]">${idx + 1}</span>
+              </div>
+            </button>
+          `;
+        })
+        .join("");
+    }
+
+    function selectEndpoint(id) {
+      activeEndpointId = id;
+      renderEndpointList();
+      const ep = endpointsData.find((item) => item.id === id);
+      if (!ep) return;
+
+      document.getElementById("terminal-prompt-title").textContent = `sonic-point > inspect ${ep.method} ${ep.path}`;
+      document.getElementById("inspector-heading").textContent = `${ep.method} ${ep.path} — ${ep.schema}`;
+      document.getElementById("inspector-badge").textContent = ep.status;
+      document.getElementById("terminal-status-label").textContent = `Last run: ${ep.status} · Latency ${ep.latency}`;
+
+      const bodyEl = document.getElementById("terminal-body");
+      bodyEl.innerHTML = ep.detail.map((line) => `<div>${line}</div>`).join("");
+
+      const jsonBox = document.getElementById("terminal-json-box");
+      jsonBox.innerHTML = `<pre class="overflow-x-auto text-[#e6e6e6]">${ep.jsonPreview}</pre>`;
+    }
+
+    function switchTerminalTab(tabKey) {
+      const preset = tabPresets[tabKey];
+      if (!preset) return;
+
+      ["scan", "schema", "context", "test", "report"].forEach((key) => {
+        const btn = document.getElementById(`tab-${key}`);
+        if (!btn) return;
+        if (key === tabKey) {
+          btn.className = "term-tab rounded-[6px] px-[9px] py-[4px] font-mono-tech text-[11px] transition-colors bg-[#ff6363] text-[#040506] font-medium";
+        } else {
+          btn.className = "term-tab rounded-[6px] px-[9px] py-[4px] font-mono-tech text-[11px] transition-colors bg-[#1b1c1e] text-[#9c9c9d] hover:text-[#ffffff]";
+        }
+      });
+
+      document.getElementById("terminal-prompt-title").textContent = preset.prompt;
+      document.getElementById("inspector-heading").textContent = preset.heading;
+      document.getElementById("inspector-badge").textContent = preset.badge;
+      document.getElementById("terminal-status-label").textContent = preset.status;
+
+      const bodyEl = document.getElementById("terminal-body");
+      bodyEl.innerHTML = preset.lines.map((line) => `<div>${line}</div>`).join("");
+
+      const jsonBox = document.getElementById("terminal-json-box");
+      jsonBox.innerHTML = `<pre class="overflow-x-auto text-[#e6e6e6]">${preset.json}</pre>`;
+    }
+
+    function selectValidatorLab(type) {
+      const data = validatorLabData[type];
+      if (!data) return;
+
+      ["zod", "joi", "yup"].forEach((key) => {
+        const btn = document.getElementById(`lab-btn-${key}`);
+        if (key === type) {
+          btn.className = "rounded-[6px] px-[12px] py-[6px] font-mono-tech text-[12px] font-medium transition-all bg-[#e6e6e6] text-[#040506]";
+        } else {
+          btn.className = "rounded-[6px] px-[12px] py-[6px] font-mono-tech text-[12px] font-medium transition-all text-[#9c9c9d] hover:text-[#ffffff]";
+        }
+      });
+
+      document.getElementById("lab-file-title").textContent = data.file;
+      document.getElementById("lab-source-code").textContent = data.source;
+      document.getElementById("lab-ast-output").textContent = data.ast;
+      document.getElementById("lab-payload-output").textContent = data.payload;
+    }
+
+    function renderReportAccordion() {
+      const container = document.getElementById("report-accordion-list");
+      const filtered = reportItems.filter(
+        (item) => activeReportFilter === "ALL" || item.category === activeReportFilter
+      );
+
+      container.innerHTML = filtered
+        .map((item) => {
+          const isOpen = expandedReportId === item.id;
+          return `
+            <div class="rounded-[8px] border border-[#2f3031] bg-[#040506] overflow-hidden">
+              <button
+                type="button"
+                onclick="toggleReportItem('${item.id}')"
+                class="w-full px-[14px] py-[12px] text-left flex flex-wrap items-center justify-between gap-[10px] hover:bg-[#111214] transition-colors"
+              >
+                <div class="flex items-center gap-[10px] min-w-0">
+                  <span class="font-mono-tech text-[11px] font-medium px-[7px] py-[2px] rounded-[4px] bg-[#1b1c1e] text-[#ffffff]">${item.method}</span>
+                  <span class="font-mono-tech text-[13px] text-[#ffffff] truncate">${item.path}</span>
+                  <span class="hidden sm:inline-block text-[12px] text-[#6a6b6c] truncate">— ${item.summary}</span>
+                </div>
+                <div class="flex items-center gap-[10px] shrink-0">
+                  <span class="font-mono-tech text-[11px] text-[#6a6b6c]">${item.latency}</span>
+                  <span class="font-mono-tech text-[11px] px-[8px] py-[2px] rounded-[5px] border ${item.statusColor}">${item.statusBadge}</span>
+                </div>
+              </button>
+              ${
+                isOpen
+                  ? `<div class="p-[14px] border-t border-[#1b1c1e] bg-[#07080a] grid grid-cols-1 md:grid-cols-2 gap-[12px]">
+                      <div>
+                        <div class="font-mono-tech text-[10px] uppercase tracking-[0.05em] text-[#6a6b6c] mb-[6px]">Sent Request Payload</div>
+                        <pre class="rounded-[6px] bg-[#040506] border border-[#1b1c1e] p-[10px] font-mono-tech text-[11px] text-[#e6e6e6] overflow-x-auto">${item.reqBody}</pre>
+                      </div>
+                      <div>
+                        <div class="font-mono-tech text-[10px] uppercase tracking-[0.05em] text-[#6a6b6c] mb-[6px]">Recorded Server Response</div>
+                        <pre class="rounded-[6px] bg-[#040506] border border-[#1b1c1e] p-[10px] font-mono-tech text-[11px] text-[#9c9c9d] overflow-x-auto">${item.resBody}</pre>
+                      </div>
+                    </div>`
+                  : ""
+              }
+            </div>
+          `;
+        })
+        .join("");
+    }
+
+    function toggleReportItem(id) {
+      expandedReportId = expandedReportId === id ? null : id;
+      renderReportAccordion();
+    }
+
+    function filterReport(cat) {
+      activeReportFilter = cat;
+      ["ALL", "PASS", "FAIL", "SKIP"].forEach((key) => {
+        const btn = document.getElementById(`rep-filter-${key}`);
+        if (key === cat) {
+          btn.className = "rounded-[6px] px-[10px] py-[5px] font-mono-tech text-[11px] bg-[#e6e6e6] text-[#040506] font-medium";
+        } else {
+          btn.className = "rounded-[6px] px-[10px] py-[5px] font-mono-tech text-[11px] bg-[#111214] text-[#9c9c9d] border border-[#2f3031] hover:border-[#454647]";
+        }
+      });
+      renderReportAccordion();
+    }
+
+    function toggleFaq(index) {
+      const body = document.getElementById(`faq-body-${index}`);
+      const icon = document.getElementById(`faq-icon-${index}`);
+      if (!body || !icon) return;
+      const isHidden = body.classList.contains("hidden");
+      if (isHidden) {
+        body.classList.remove("hidden");
+        icon.textContent = "−";
+      } else {
+        body.classList.add("hidden");
+        icon.textContent = "+";
+      }
+    }
+
+    // Command Palette Modal Logic
+    const modalCommands = [
+      { label: "Simulasi REPL /scan", desc: "Jalankan scanner AST di terminal interaktif", action: () => { switchTerminalTab('scan'); location.hash = '#preview'; } },
+      { label: "Simulasi REPL /schema", desc: "Inspeksi validator Joi, Zod, dan Yup", action: () => { switchTerminalTab('schema'); location.hash = '#preview'; } },
+      { label: "Simulasi REPL /context", desc: "Lihat sampel ID relasi yang di-cache", action: () => { switchTerminalTab('context'); location.hash = '#preview'; } },
+      { label: "Simulasi REPL /test", desc: "Uji seluruh kontrak endpoint", action: () => { switchTerminalTab('test'); location.hash = '#preview'; } },
+      { label: "Buka AST & Schema Transpiler Lab", desc: "Bandingkan kode Zod, Joi, dan Yup", action: () => { location.hash = '#ast-lab'; } },
+      { label: "Lihat Live Swagger-style Report", desc: "Contoh laporan publik yang jujur", action: () => { location.hash = '#report-preview'; } },
+      { label: "Salin Perintah Instalasi NPM", desc: "npm install -g sonic-point", action: () => { copyInstallCommand('nav'); } }
+    ];
+
+
+
+    function closeCommandModal() {
+      const modal = document.getElementById("cmd-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function filterModalCommands(query) {
+      const q = query.toLowerCase().trim();
+      const listEl = document.getElementById("cmd-modal-list");
+      const matches = modalCommands.filter(
+        (item) => item.label.toLowerCase().includes(q) || item.desc.toLowerCase().includes(q)
+      );
+      listEl.innerHTML = matches
+        .map(
+          (item, idx) => `
+          <button
+            type="button"
+            onclick="runModalCommand(${idx}, '${q.replace(/'/g, "")}')"
+            class="w-full text-left rounded-[6px] px-[12px] py-[10px] hover:bg-[#1b1c1e] flex items-center justify-between gap-[12px] transition-colors"
+          >
+            <div>
+              <div class="text-[13px] font-medium text-[#ffffff]">${item.label}</div>
+              <div class="font-mono-tech text-[11px] text-[#6a6b6c]">${item.desc}</div>
+            </div>
+            <span class="ray-kbd !text-[10px]">↵</span>
+          </button>
+        `
+        )
+        .join("");
+    }
+
+    function runModalCommand(filteredIdx, query) {
+      const q = (query || "").toLowerCase().trim();
+      const matches = modalCommands.filter(
+        (item) => item.label.toLowerCase().includes(q) || item.desc.toLowerCase().includes(q)
+      );
+      if (matches[filteredIdx]) {
+        matches[filteredIdx].action();
+      }
+      closeCommandModal();
+    }
+
+    function copyTextToClipboard(text) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand("copy");
+      } catch (err) {}
+      document.body.removeChild(textarea);
+    }
+
+    function copyInstallCommand(source) {
+      copyTextToClipboard(currentInstallCmd);
+      if (source === "hero") {
+        const textEl = document.getElementById("hero-copy-text");
+        textEl.textContent = "Copied!";
+        setTimeout(() => { textEl.textContent = "Copy"; }, 1800);
+      } else if (source === "nav") {
+        const labelEl = document.getElementById("nav-copy-label");
+        labelEl.textContent = "Copied!";
+        setTimeout(() => { labelEl.textContent = "Install Package"; }, 1800);
+      } else if (source === "footer") {
+        const footerEl = document.getElementById("footer-copy-label");
+        footerEl.textContent = `Copied: ${currentInstallCmd}`;
+        setTimeout(() => { footerEl.textContent = "Quickstart — Copy npm install"; }, 1800);
+      }
+    }
+
+    function copyCmd(cmd, btnElement) {
+      copyTextToClipboard(cmd);
+      const original = btnElement.innerHTML;
+      btnElement.textContent = "Copied!";
+      setTimeout(() => {
+        btnElement.innerHTML = original;
+      }, 1400);
+    }
+
+    function copyConfigJson(btn) {
+      const configStr = `{\n  "entry": "src/app.ts",\n  "baseUrl": "http://localhost:4000",\n  "auth": {\n    "loginEndpoint": "POST /api/v1/auth/login",\n    "tokenField": "data.accessToken"\n  },\n  "safety": { "skipDelete": true, "sampleLimit": 25 }\n}`;
+      copyTextToClipboard(configStr);
+      const old = btn.textContent;
+      btn.textContent = "Copied JSON!";
+      setTimeout(() => { btn.textContent = old; }, 1500);
+    }
+
+    // Keyboard shortcuts (⌘K / Ctrl+K for Command Palette, 1-5 for Endpoints)
+    window.addEventListener("keydown", (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+      } else if (e.key === "Escape") {
+        closeCommandModal();
+      } else if (["1", "2", "3", "4", "5"].includes(e.key) && document.activeElement.tagName !== "INPUT") {
+        const idx = parseInt(e.key, 10) - 1;
+        if (endpointsData[idx]) {
+          selectEndpoint(idx);
+        }
+      }
+    });
+
+    window.onload = function () {
+      renderEndpointList();
+      selectEndpoint(2);
+      selectValidatorLab("zod");
+      renderReportAccordion();
+    };
+  </script>
+</body>
+</html>

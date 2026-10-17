@@ -34,14 +34,15 @@ Stack: Next.js 15 App Router + React 19 + Tailwind v4 (`@import "tailwindcss"`, 
 
 ## Token desain (ringkas — detail di `DESIGN.md` + `src/app/globals.css`)
 
-- **Amber** (aksen): `lightning-yellow #ffe600`, `electric-gold #ffd000`, `amber-depth #a67c00`, `dark-amber #6b4e00`.
-- **Netral**: `snow → silver-mist → smoke → graphite → slate → charcoal → ash → obsidian (#121212) → ink (#0d0d0d)`.
-- **Fungsional (data saja)**: `ok`, `err`, `method-get/post/put/patch/delete/other` — dipakai chip method + status badge di report.
-- Skala teks `text-caption…text-display` (+`text-code` untuk blok kode) sudah membawa line-height & tracking. Radius hanya `rounded-full`/`rounded-2xl`/`rounded-lg`. `max-w-page` = 1200px.
-- Semua token WAJIB di blok `@theme` (yang di `:root` polos tidak menghasilkan utility).
+- **Amber** (satu-satunya aksen): `lightning-yellow #ffe600`, `electric-gold #ffd000`, `amber-depth #a67c00`, `dark-amber #6b4e00`. CTA tetap netral (`.btn-primary` fill `mist`, `.btn-ghost` obsidian) — amber bukan warna tombol.
+- **Netral** (terang → gelap): `pure-white #ffffff → mist #e6e6e6 → ash #9c9c9d → smoke #6a6b6c → iron #454647 → hairline #363739 → slate #2f3031 → graphite #1b1c1e → obsidian #111214 → ink #07080a → void-black #040506`.
+- **Fungsional (data saja)**: `ok`, `warn`, `err`, `method-get #56c2ff` (satu-satunya biru), `method-post/put/patch/delete/other` — dipakai chip method + badge status + lencana hasil. Merah hanya 4xx/5xx + DELETE.
+- Skala teks `text-micro(10) tiny(11) mono(12) code(13) body-sm(14) body(16) subheading(18) title(20) heading-sm(24) heading(32) heading-lg(38) display(56)` — line-height/tracking menempel di token. Shadow keycap `shadow-key/key-hover/btn/window/well/orb/kbd/edge`. `max-w-page` = 1200px, `max-w-rail` = 1248px. Kelas kustom di `@layer components`: `glass-nav`, `btn-primary/ghost`, `key-card(-amber/-gold)`, `edge-card`, `icon-orb`, `kbd`, `badge(-amber/-gold)`, `input-well`, `window-frame`, `eyebrow`, `bg-tech-grid`, `bg-dot-matrix`, `section-beam`, `rail-crosshair`, `ghost-chip`, `hero-wash/bar`, `animate-flow`.
+- Semua token WAJIB di blok `@theme` (yang di `:root` polos tidak menghasilkan utility). Nilai arbitrary (gradien/blur/mask) hanya di `globals.css`, bukan JSX.
 
 ## Verifikasi web (tidak ada test runner)
 
 1. `pnpm --filter web typecheck`
 2. `pnpm --filter web build` (harus lolos juga tanpa env Supabase — landing & docs statis)
-3. Smoke manual: `next start -p 3002` lalu cek `/`, `/docs/quickstart`, `/report/<uuid>`. Tabel terminal di landing harus 44 kolom per baris box; anchor TOC docs harus sama dengan `id` heading.
+3. Smoke manual: `next start -p 3002` lalu cek `/` (anchor `#preview #ast-lab #features #report-preview #compare #commands #faq` + teks hero + scroll-spy item navbar aktif mengikuti section), `/docs/quickstart` (MiniHeader + sidebar + anchor TOC = `id` heading), `/report/<uuid>` (MiniHeader + window-frame).
+4. Viewer dengan data tiruan: build ulang dengan `NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321` + anon key dummy (env proses menang atas `.env.local`), jalankan mock REST Supabase, lalu `next start`; setelah selesai **build ulang bersih**. Ingat: satu `next start` per `.next`.

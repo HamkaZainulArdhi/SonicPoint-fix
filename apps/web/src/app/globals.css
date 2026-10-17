@@ -1,88 +1,107 @@
 @import "tailwindcss";
-
 /*
- * Design tokens — sumber: apps/web/DESIGN.md (tema "Midnight + Amber/Sonic").
- * Semua token WAJIB di blok @theme agar utility Tailwind (`bg-obsidian`,
- * `text-heading`, `max-w-page`) benar-benar ter-generate. Jangan taruh warna
- * di :root polos — itu tidak menghasilkan utility apa pun.
+ * Design tokens — "Midnight + Amber" (dark-only, satu aksen).
+ * Semua warna/ukuran WAJIB di @theme agar utility Tailwind benar-benar
+ * ter-generate (`bg-void-black`, `text-micro`, `shadow-key`, `max-w-page`).
+ * Jangan taruh token di :root polos — itu tidak menghasilkan utility apa pun.
  */
 @theme {
-  /* ── Aksen amber (menggantikan "Phosphor Green" di DESIGN.md) ────────── */
-  --color-lightning-yellow: #ffe600;
-  --color-electric-gold: #ffd000;
-  --color-amber-depth: #a67c00;
-  --color-dark-amber: #6b4e00;
+  /* ── Netral (terang → gelap) ─────────────────────────────────────────── */
+  --color-void-black: #040506; /* kanvas halaman */
+  --color-ink: #07080a; /* well / body window */
+  --color-obsidian: #111214; /* permukaan UI */
+  --color-graphite: #1b1c1e; /* badge / panel */
+  --color-slate: #2f3031; /* border komponen (catatan: menimpa nama skala Tailwind) */
+  --color-hairline: #363739; /* border section */
+  --color-iron: #454647; /* border hover */
+  --color-smoke: #6a6b6c; /* teks tersier */
+  --color-ash: #9c9c9d; /* teks sekunder */
+  --color-mist: #e6e6e6; /* teks terang / tombol netral */
+  --color-pure-white: #ffffff; /* headline */
 
-  /* ── Netral terang → gelap ───────────────────────────────────────────── */
-  --color-snow: #fafafa;
-  --color-silver-mist: #b4b4b4;
-  --color-smoke: #898989;
-  --color-graphite: #4d4d4d;
-  --color-slate: #393939;
-  --color-charcoal: #2e2e2e;
-  --color-ash: #242424;
-  --color-obsidian: #121212;
-  --color-ink: #0d0d0d;
+  /* ── Aksen amber (satu-satunya warna dekoratif) ──────────────────────── */
+  --color-lightning-yellow: #ffe600; /* primary: logo, tab aktif, badge, bar hero */
+  --color-electric-gold: #ffd000; /* hover / ikon aksen */
+  --color-amber-depth: #a67c00; /* border pressed / garis */
+  --color-dark-amber: #6b4e00; /* permukaan tint amber */
 
   /*
-   * Warna fungsional — HANYA untuk data (status hasil tes & chip method),
-   * bukan dekorasi. Ini satu-satunya penyimpangan sadar dari aturan
-   * "monokrom + satu aksen" DESIGN.md (keputusan: report bergaya Swagger).
+   * Warna fungsional — HANYA saat membawa status/hasil (chip method, badge
+   * status, lencana hasil). Tidak pernah dipakai sebagai dekorasi.
    */
-  --color-ok: #3fb950;
-  --color-err: #f85149;
-  --color-method-get: #6cb6ff;
-  --color-method-post: #3fb950;
-  --color-method-put: #e3903f;
+  --color-ok: #59d499;
+  --color-warn: #ffbe5c;
+  --color-err: #ff6363;
+  --color-method-get: #56c2ff;
+  --color-method-post: #59d499;
+  --color-method-put: #ffbe5c;
   --color-method-patch: #39c9bd;
-  --color-method-delete: #f85149;
-  --color-method-other: #b4b4b4;
+  --color-method-delete: #ff6363;
+  --color-method-other: #9c9c9d;
 
-  /* ── Skala teks (line-height & tracking menempel di utility) ─────────── */
-  --text-caption: 12px;
-  --text-caption--line-height: 1.5;
-  --text-caption--letter-spacing: -0.084px;
+  /* ── Skala teks (line-height menempel di token) ──────────────────────── */
+  --text-micro: 10px;
+  --text-micro--line-height: 1.4;
 
-  --text-body-sm: 14px;
-  --text-body-sm--line-height: 1.43;
-  --text-body-sm--letter-spacing: -0.098px;
+  --text-tiny: 11px;
+  --text-tiny--line-height: 1.5;
 
-  --text-body: 16px;
-  --text-body--line-height: 1.5;
-  --text-body--letter-spacing: -0.112px;
+  --text-mono: 12px;
+  --text-mono--line-height: 1.65;
 
-  --text-subheading: 18px;
-  --text-subheading--line-height: 1.38;
-  --text-subheading--letter-spacing: -0.126px;
-
-  --text-heading-sm: 24px;
-  --text-heading-sm--line-height: 1.33;
-  --text-heading-sm--letter-spacing: -0.168px;
-
-  --text-heading: 36px;
-  --text-heading--line-height: 1.2;
-  --text-heading--letter-spacing: -0.252px;
-
-  --text-display: 72px;
-  --text-display--line-height: 1;
-  --text-display--letter-spacing: -0.504px;
-
-  /* Tambahan di luar 7 ukuran DESIGN.md: blok kode & output terminal. */
   --text-code: 13px;
   --text-code--line-height: 1.6;
 
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 1.55;
+
+  --text-body: 16px;
+  --text-body--line-height: 1.55;
+
+  --text-subheading: 18px;
+  --text-subheading--line-height: 1.45;
+
+  --text-title: 20px;
+  --text-title--line-height: 1.2;
+  --text-title--letter-spacing: 0.2px;
+
+  --text-heading-sm: 24px;
+  --text-heading-sm--line-height: 1.2;
+
+  --text-heading: 32px;
+  --text-heading--line-height: 1.15;
+
+  --text-heading-lg: 38px;
+  --text-heading-lg--line-height: 1.15;
+  --text-heading-lg--letter-spacing: 0.22px;
+
+  --text-display: 56px;
+  --text-display--line-height: 1.17;
+  --text-display--letter-spacing: 0.22px;
+
+  /* ── Shadow khas "keycap" (inset + ring, tanpa glow dekoratif) ───────── */
+  --shadow-key: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 0 1px rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  --shadow-key-hover: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.38),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+  --shadow-btn: 0 7px 3px rgba(0, 0, 0, 0.03), 0 4px 4px rgba(0, 0, 0, 0.25);
+  --shadow-window: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 30px 50px rgba(0, 0, 0, 0.4),
+    0 4px 24px rgba(166, 124, 0, 0.09), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --shadow-well: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  --shadow-orb: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.12);
+  --shadow-kbd: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.45);
+  --shadow-edge: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
   /* ── Layout ──────────────────────────────────────────────────────────── */
   --container-page: 1200px;
+  --container-rail: 1248px;
 }
 
-/*
- * Font dari `next/font` — pakai `@theme inline` supaya nilai variabel runtime
- * (dipasang di <html>) ikut terbaca utility `font-sans` / `font-mono`.
- */
+/* Font dari `next/font` — `@theme inline` supaya variabel runtime ikut terbaca. */
 @theme inline {
-  --font-sans:
-    var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-    Roboto, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    sans-serif;
   --font-mono:
     var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco,
     Consolas, "Liberation Mono", monospace;
@@ -92,18 +111,28 @@
   html {
     color-scheme: dark;
     scroll-behavior: smooth;
+    scroll-padding-top: 24px;
   }
 
   body {
-    @apply bg-obsidian font-sans text-body text-snow antialiased;
+    background-color: var(--color-void-black);
+    color: var(--color-pure-white);
+    font-family:
+      var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+      Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    font-feature-settings: "calt", "kern", "liga";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
   }
 
   ::selection {
-    background-color: var(--color-lightning-yellow);
-    color: var(--color-obsidian);
+    background-color: rgba(255, 230, 0, 0.25);
+    color: var(--color-lightning-yellow);
   }
 
-  /* Fokus = garis amber tipis (DESIGN.md: border kromatik, bukan glow). */
   :focus-visible {
     outline: 1px solid var(--color-electric-gold);
     outline-offset: 2px;
@@ -112,5 +141,379 @@
   * {
     scrollbar-width: thin;
     scrollbar-color: var(--color-slate) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-void-black);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-slate);
+    border-radius: 9999px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+/* Keyframes untuk titik status yang "hidup" (dipisah dari @layer agar aman). */
+@keyframes flow-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@layer components {
+  /* ── Nav kaca mengapung ──────────────────────────────────────────────── */
+  .glass-nav {
+    background: rgba(4, 5, 6, 0.72);
+    backdrop-filter: blur(48px);
+    -webkit-backdrop-filter: blur(48px);
+    border: 1px solid var(--color-hairline);
+    border-radius: 8px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 12px 32px rgba(0, 0, 0, 0.5);
+  }
+
+  /* ── Tombol (referensi: netral untuk CTA, amber untuk aksen) ─────────── */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background-color: var(--color-mist);
+    color: var(--color-iron);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.008em;
+    line-height: 1.15;
+    box-shadow: var(--shadow-btn);
+    cursor: pointer;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease,
+      transform 0.1s ease;
+  }
+  .btn-primary:hover {
+    background-color: var(--color-pure-white);
+    color: var(--color-void-black);
+  }
+  .btn-primary:active {
+    transform: translateY(0.5px);
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--color-slate);
+    background-color: var(--color-obsidian);
+    color: var(--color-ash);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.008em;
+    line-height: 1.15;
+    box-shadow: var(--shadow-edge);
+    cursor: pointer;
+    transition:
+      border-color 0.15s ease,
+      color 0.15s ease,
+      background-color 0.15s ease;
+  }
+  .btn-ghost:hover {
+    border-color: var(--color-iron);
+    background-color: var(--color-graphite);
+    color: var(--color-pure-white);
+  }
+
+  /* ── Kartu ───────────────────────────────────────────────────────────── */
+  .key-card {
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: var(--shadow-key);
+    transition:
+      box-shadow 0.2s ease,
+      background-color 0.2s ease;
+  }
+  .key-card:hover {
+    box-shadow: var(--shadow-key-hover);
+    background-color: rgba(7, 8, 10, 0.65);
+  }
+
+  /* Permukaan tint amber — satu-satunya kartu berwarna. */
+  .key-card-amber {
+    border-radius: 16px;
+    padding: 24px;
+    background: linear-gradient(180deg, rgba(107, 78, 0, 0.42) 0%, rgba(7, 8, 10, 0.4) 100%);
+    box-shadow: var(--shadow-key);
+    transition: box-shadow 0.2s ease;
+  }
+  .key-card-amber:hover {
+    box-shadow: var(--shadow-key-hover);
+  }
+
+  /* Kartu garis tepi + tint emas tipis (pengganti kartu "biru" referensi). */
+  .key-card-gold {
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(166, 124, 0, 0.35);
+    background: linear-gradient(180deg, rgba(166, 124, 0, 0.12) 0%, rgba(7, 8, 10, 0.4) 100%);
+    box-shadow: var(--shadow-key);
+    transition:
+      box-shadow 0.2s ease,
+      border-color 0.2s ease;
+  }
+  .key-card-gold:hover {
+    box-shadow: var(--shadow-key-hover);
+    border-color: rgba(166, 124, 0, 0.6);
+  }
+
+  .edge-card {
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid var(--color-hairline);
+    box-shadow: var(--shadow-edge);
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+  }
+  .edge-card:hover {
+    border-color: var(--color-iron);
+    background-color: rgba(17, 18, 20, 0.35);
+  }
+
+  /* ── Orb ikon bulat ──────────────────────────────────────────────────── */
+  .icon-orb {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    border-radius: 99999px;
+    background-color: var(--color-obsidian);
+    color: var(--color-mist);
+    box-shadow: var(--shadow-orb);
+  }
+
+  /* ── Keycap & badge ──────────────────────────────────────────────────── */
+  .kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 6px;
+    border-radius: 5px;
+    background-color: #151618;
+    color: var(--color-ash);
+    font-family:
+      var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco,
+      Consolas, monospace;
+    font-size: 11px;
+    line-height: 1.3;
+    box-shadow: var(--shadow-kbd);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background-color: var(--color-graphite);
+    color: var(--color-pure-white);
+    font-family:
+      var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco,
+      Consolas, monospace;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    line-height: 1.4;
+  }
+
+  .badge-amber {
+    background-color: var(--color-lightning-yellow);
+    color: var(--color-void-black);
+    font-weight: 500;
+  }
+
+  .badge-gold {
+    background-color: rgba(255, 230, 0, 0.12);
+    color: var(--color-electric-gold);
+    border: 1px solid rgba(166, 124, 0, 0.45);
+    font-weight: 500;
+  }
+
+  /* ── Well (input / panel inset) ──────────────────────────────────────── */
+  .input-well {
+    padding: 8px 12px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--color-pure-white);
+    box-shadow: var(--shadow-well);
+  }
+
+  .window-frame {
+    border-radius: 12px;
+    background-color: var(--color-ink);
+    box-shadow: var(--shadow-window);
+  }
+
+  /* ── Eyebrow section ─────────────────────────────────────────────────── */
+  .eyebrow {
+    font-family:
+      var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco,
+      Consolas, monospace;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 0.91;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+
+  /* ── Dekorasi arsitektural (satu tempat, bukan arbitrary value di JSX) ── */
+  .bg-tech-grid {
+    background-size: 48px 48px;
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+    mask-image: radial-gradient(ellipse 85% 75% at 50% 50%, #000 35%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 50%, #000 35%, transparent 100%);
+  }
+
+  .bg-dot-matrix {
+    background-size: 24px 24px;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.065) 1px, transparent 1px);
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, #000 30%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, #000 30%, transparent 100%);
+  }
+
+  .section-beam {
+    position: absolute;
+    top: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(680px, 85vw);
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 230, 0, 0.45) 35%,
+      rgba(166, 124, 0, 0.45) 65%,
+      transparent 100%
+    );
+    pointer-events: none;
+  }
+
+  .rail-crosshair {
+    position: absolute;
+    width: 11px;
+    height: 11px;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .rail-crosshair::before,
+  .rail-crosshair::after {
+    content: "";
+    position: absolute;
+    background-color: #454647;
+  }
+  .rail-crosshair::before {
+    top: 5px;
+    left: 0;
+    width: 11px;
+    height: 1px;
+  }
+  .rail-crosshair::after {
+    top: 0;
+    left: 5px;
+    width: 1px;
+    height: 11px;
+  }
+
+  .ghost-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.045);
+    background: rgba(11, 12, 14, 0.55);
+    backdrop-filter: blur(8px);
+    font-family:
+      var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco,
+      Consolas, monospace;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    color: rgba(156, 156, 157, 0.45);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* ── Atmosfer hero (amber, bukan biru) ───────────────────────────────── */
+  .hero-wash {
+    background: radial-gradient(
+      50% 50% at 50% 50%,
+      rgba(255, 230, 0, 0.16) 0%,
+      rgba(166, 124, 0, 0.16) 46%,
+      rgba(63, 48, 0, 0.22) 74%,
+      rgba(4, 5, 6, 0) 100%
+    );
+    filter: blur(37.5px);
+  }
+  .hero-bar-1 {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 230, 0, 0.04) 0%,
+      rgba(255, 230, 0, 0.35) 50%,
+      rgba(166, 124, 0, 0.18) 100%
+    );
+    filter: blur(44px);
+    transform: translate(-50%, -50%) rotate(-24deg);
+  }
+  .hero-bar-2 {
+    background: linear-gradient(
+      90deg,
+      rgba(166, 124, 0, 0.25) 0%,
+      rgba(255, 214, 0, 0.22) 60%,
+      rgba(63, 48, 0, 0) 100%
+    );
+    filter: blur(38px);
+    transform: translate(-50%, -50%) rotate(-24deg);
+  }
+
+  /* Kanvas lightning hero — diredupkan ke tepi & bawah supaya teks tetap terbaca.
+     Blend `screen` membuat bolt "menambah cahaya" ke grid di belakangnya. */
+  .hero-lightning {
+    mix-blend-mode: screen;
+    mask-image: radial-gradient(
+      ellipse 76% 60% at 50% 28%,
+      #000 0%,
+      rgba(0, 0, 0, 0.7) 40%,
+      rgba(0, 0, 0, 0.2) 68%,
+      transparent 88%
+    );
+    -webkit-mask-image: radial-gradient(
+      ellipse 76% 60% at 50% 28%,
+      #000 0%,
+      rgba(0, 0, 0, 0.7) 40%,
+      rgba(0, 0, 0, 0.2) 68%,
+      transparent 88%
+    );
+  }
+
+  .animate-flow {
+    animation: flow-pulse 2.4s ease-in-out infinite;
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
+import { useCopy } from "@/lib/use-copy";
 
 type Props = {
   /** Konten MDX (`<pre>` dari fenced code block). */
@@ -16,31 +17,27 @@ type Props = {
  */
 export function CodeBlock({ children, code, className = "" }: Props) {
   const preRef = useRef<HTMLPreElement>(null);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy();
 
-  async function copy() {
+  async function handleCopy() {
     const text = code ?? preRef.current?.innerText ?? "";
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
-    } catch {
-      // clipboard tidak tersedia — diamkan
-    }
+    await copy(text);
   }
 
   return (
-    <div className={`group relative overflow-hidden rounded-lg border border-charcoal bg-ink ${className ?? "mt-6"}`}>
+    <div
+      className={`group relative overflow-hidden rounded-lg border border-graphite bg-ink ${className || "mt-6"}`}
+    >
       <button
         type="button"
-        onClick={copy}
-        className="absolute right-2.5 top-2.5 z-10 rounded-full border border-slate bg-ink/90 px-2.5 py-1 text-caption text-smoke transition-colors hover:border-graphite hover:text-snow"
+        onClick={() => void handleCopy()}
+        className="absolute right-2.5 top-2.5 z-10 rounded-[6px] border border-slate bg-obsidian/90 px-2 py-1 font-mono text-micro uppercase tracking-[0.05em] text-ash transition-colors hover:border-iron hover:text-pure-white"
       >
         {copied ? "Tersalin" : "Salin"}
       </button>
       <pre
         ref={preRef}
-        className="overflow-x-auto p-4 pr-20 font-mono text-code text-silver-mist [&_code]:border-0 [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-inherit"
+        className="overflow-x-auto p-3.5 pr-20 font-mono text-code leading-[1.65] text-mist [&_code]:border-0 [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-inherit"
       >
         {code ?? children}
       </pre>

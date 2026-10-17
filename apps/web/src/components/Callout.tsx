@@ -10,15 +10,15 @@ export function Callout({
   title?: string;
   children: ReactNode;
 }) {
-  const border = kind === "warn" ? "border-amber-depth/50" : "border-charcoal";
-  const heading = kind === "warn" ? "text-electric-gold" : "text-snow";
+  const border = kind === "warn" ? "border-amber-depth/60" : "border-slate";
+  const heading = kind === "warn" ? "text-electric-gold" : "text-pure-white";
 
   return (
-    <div className={`mt-6 rounded-lg border ${border} bg-ash/40 p-4 [&>p]:mt-0`}>
+    <div className={`mt-6 rounded-lg border ${border} bg-graphite/40 p-4 [&>p]:mt-0`}>
       {title ? (
         <div className={`text-body-sm font-medium ${heading}`}>{title}</div>
       ) : null}
-      <div className={`text-body-sm text-silver-mist [&>p]:mt-0 [&>ul]:mt-0 ${title ? "mt-1.5" : ""}`}>
+      <div className={`text-body-sm text-ash [&>p]:mt-0 [&>ul]:mt-0 ${title ? "mt-1.5" : ""}`}>
         {children}
       </div>
     </div>

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useCopy } from "@/lib/use-copy";
 
-/** Tombol salin kecil — dipakai di install box & kartu session report. */
+/** Tombol salin kecil — dipakai di kartu session report. */
 export function CopyButton({
   value,
   label = "Salin",
@@ -12,23 +12,13 @@ export function CopyButton({
   label?: string;
   className?: string;
 }) {
-  const [copied, setCopied] = useState(false);
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
-    } catch {
-      // Clipboard tidak tersedia (http / izin browser) — tidak ada efek.
-    }
-  }
+  const { copied, copy } = useCopy();
 
   return (
     <button
       type="button"
-      onClick={copy}
-      className={`rounded-full border border-slate px-2.5 py-1 text-caption text-silver-mist transition-colors hover:border-graphite hover:text-snow ${className}`}
+      onClick={() => void copy(value)}
+      className={`rounded-[6px] border border-slate px-2 py-1 font-mono text-micro uppercase tracking-[0.05em] text-ash transition-colors hover:border-iron hover:text-pure-white ${className}`.trim()}
     >
       {copied ? "Tersalin" : label}
     </button>

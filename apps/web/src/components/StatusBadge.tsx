@@ -5,7 +5,7 @@ type Props = { success: boolean; statusCode: number | string | null };
 function Chip({ tone, label }: { tone: string; label: string }) {
   return (
     <span
-      className={`inline-flex items-center justify-center rounded-full border px-2.5 py-0.5 font-mono text-caption ${tone}`}
+      className={`inline-flex items-center justify-center rounded-[5px] border px-2 py-0.5 font-mono text-micro uppercase tracking-[0.05em] ${tone}`}
     >
       {label}
     </span>
@@ -15,11 +15,11 @@ function Chip({ tone, label }: { tone: string; label: string }) {
 export function StatusBadge({ success, statusCode }: Props) {
   // Skip ditulis CLI sebagai string "SKIPPED" — bukan kegagalan merah.
   if (isSkippedStatus(statusCode)) {
-    return <Chip tone="border-charcoal bg-ash text-smoke" label="SKIPPED" />;
+    return <Chip tone="border-amber-depth/50 bg-amber-depth/10 text-warn" label="skipped" />;
   }
 
   if (statusCode === null || statusCode === undefined || statusCode === "") {
-    return <Chip tone="border-charcoal bg-ash text-smoke" label="—" />;
+    return <Chip tone="border-slate bg-graphite text-smoke" label="—" />;
   }
 
   return success ? (

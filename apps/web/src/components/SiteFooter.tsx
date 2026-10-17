@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { site } from "@/lib/site";
-import { BoltMark } from "./BoltMark";
+import { LogoMark } from "./ui";
 
 const links = [
   { label: "Dokumentasi", href: "/docs" },
@@ -11,38 +11,41 @@ const links = [
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-charcoal">
-      <div className="mx-auto flex max-w-page flex-col gap-10 px-6 py-12 sm:flex-row sm:justify-between">
-        <div className="max-w-sm">
-          <div className="flex items-center gap-2.5 text-snow">
-            <BoltMark className="size-4 text-lightning-yellow" />
-            <span className="font-mono text-body-sm font-medium">sonic-point</span>
-          </div>
-          <p className="mt-3 text-body-sm text-smoke">
-            Scanner endpoint Express.js — temukan lewat AST, uji dengan payload
-            dari schema validasimu, lalu bagikan laporan lewat satu link.
-          </p>
+    <footer className="relative border-t border-hairline/60 py-8">
+      <div className="mx-auto flex max-w-page flex-col items-center justify-between gap-4 px-6 text-center sm:flex-row sm:text-left">
+        <div className="flex items-center gap-2 text-code font-medium text-ash">
+          <LogoMark />
+          <span className="text-pure-white">{site.name}</span>
+          <span className="text-smoke">— Express AST API Tester</span>
         </div>
 
-        <nav className="grid grid-cols-2 gap-x-16 gap-y-3 text-body-sm text-silver-mist">
+        <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-body-sm text-ash">
           {links.map((link) =>
             "external" in link ? (
-              <a key={link.label} href={link.href} target="_blank" rel="noreferrer" className="transition-colors hover:text-snow">
+              <a
+                key={link.label}
+                href={link.href}
+                target="_blank"
+                rel="noreferrer"
+                className="transition-colors hover:text-pure-white"
+              >
                 {link.label}
               </a>
             ) : (
-              <Link key={link.label} href={link.href} className="transition-colors hover:text-snow">
+              <Link
+                key={link.label}
+                href={link.href}
+                className="transition-colors hover:text-pure-white"
+              >
                 {link.label}
               </Link>
             ),
           )}
         </nav>
-      </div>
 
-      <div className="border-t border-charcoal">
-        <div className="mx-auto flex max-w-page flex-col gap-2 px-6 py-4 text-caption text-graphite sm:flex-row sm:items-center sm:justify-between">
-          <span>Dokumentasi berbahasa Indonesia. Proyek sumber terbuka.</span>
-          <span className="font-mono">$ {site.install}</span>
+        <div className="font-mono text-tiny text-smoke">
+          v{site.version} <span className="mx-1.5 text-slate">|</span> Express.js ·
+          Joi · Zod · Yup
         </div>
       </div>
     </footer>
