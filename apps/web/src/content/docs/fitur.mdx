@@ -1,0 +1,60 @@
+---
+title: Fitur
+description: Yang bisa dilakukan SonicPoint, dengan batasnya masing-masing.
+---
+
+## Scan berbasis AST
+
+Endpoint ditemukan dari kode, bukan dari asumsi URL. Mount prefix
+(`app.use("/api", router)`) diikuti, import relatif di-resolve, dan import
+melingkar tidak membuat scanner tersesat.
+
+## Schema validasi terbaca
+
+Joi, Zod, dan Yup di folder validasi standar dipindai jadi daftar field:
+nama, tipe, required/optional, constraint (`min: 8`), format (`email`), dan
+enum. Schema inilah yang jadi cetak biru payload saat pengujian.
+
+## Payload AI dengan fallback deterministik
+
+Dengan Gemini API key, AI mengisi payload sesuai schema — termasuk nilai
+contoh yang wajar. Tanpa key (atau saat AI gagal), fallback deterministik
+mengambil alih: testing tidak pernah bergantung pada AI yang hidup.
+
+## ID relasi dari API-mu sendiri
+
+`itemId`, `lahanId`, dan foreign key lain tidak pernah dikarang. Nilainya
+disampel dari collection GET milikmu, di-cache di `.sonic-point.json`, dan
+di-refresh otomatis kalau terbukti basi (not-found pada run berikutnya).
+Detail: [Referensi FK](/docs/refs).
+
+## Auth-aware
+
+Login sekali lewat `loginEndpoint`, token diambil dari `tokenField`, lalu
+dipakai sebagai `Authorization: Bearer` di semua request — termasuk request
+sampling. Token di-reuse di run berikutnya selama masih tersimpan.
+
+## Peta konteks endpoint
+
+`scan --context` menelusuri rantai controller → service → model → schema →
+auth per endpoint, dan menandai yang tidak ketemu dengan `[missing: …]`.
+Berguna untuk melihat endpoint mana yang "yatim" tanpa service/model.
+
+## REPL interaktif
+
+`sonic-point` tanpa argumen membuka prompt dengan slash command: `/scan`,
+`/schema`, `/context`, `/test`, `/report`, `/config`. Hasil di-scan sekali,
+diuji, dan dipublikasikan tanpa keluar dari satu sesi. Lihat
+[REPL interaktif](/docs/tui).
+
+## Laporan siap dibagikan
+
+Hasil uji diterbitkan ke platform dan bisa dibuka lewat `/report/[sessionId]` —
+lengkap dengan request body, response preview, status, dan latensi per
+endpoint. Warna method mengikuti konvensi Swagger supaya cepat dibaca.
+
+## Jujur soal kegagalan
+
+Endpoint yang gagal ditulis gagal, dengan pesan error aslinya. Endpoint yang
+tidak bisa diuji (misalnya id relasi tidak tersedia) di-skip dengan alasan —
+tidak ada hasil yang dipoles atau dikarang.

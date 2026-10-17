@@ -1,0 +1,95 @@
+---
+title: Quickstart
+description: Dari nol sampai link laporan dalam empat perintah.
+---
+
+Contoh di halaman ini memakai aplikasi Express generik dengan `POST /api/orders`
+(yang membutuhkan `itemId`) dan login JWT.
+
+## 1. Konfigurasi target
+
+```bash
+sonic-point init
+```
+
+CLI menanyakan base URL, login endpoint, email, password, token field path, dan
+token (opsional — kosongkan agar login otomatis). Hasilnya `.sonic-point.json`
+di root project.
+
+## 2. Lihat isi API-mu
+
+```bash
+sonic-point scan
+```
+
+```text
+✔ Found 5 route files
+
+📂 src/routes/items.js
+GET      /api/items
+POST     /api/items
+GET      /api/items/:id
+
+📂 src/routes/orders.js
+GET      /api/orders
+POST     /api/orders
+```
+
+Tiga mode lain: `--schema` (endpoint body + schema validasinya), `--context`
+(controller/service/model per endpoint), dan `--snippets` (JSON potongan kode).
+
+## 3. Uji endpoint
+
+```bash
+sonic-point send
+```
+
+Tanpa `--method`, `send` menguji **semua GET** — aman, tanpa operasi tulis.
+Untuk satu endpoint tertentu:
+
+```bash
+sonic-point send --method POST /api/orders
+```
+
+```text
+↳ refs.item = 7f3a2b (saved)
+
+┌──────────┬─────────────────┬─────────────┐
+│ METHOD   │ ENDPOINT        │ STATUS      │
+├──────────┼─────────────────┼─────────────┤
+│ POST     │ /api/orders     │ ✔ (201)     │
+└──────────┴─────────────────┴─────────────┘
+
+Tested 1: 1 passed · 0 failed · 0 skipped
+```
+
+Perhatikan baris `refs.item`: `itemId` tidak dikarang AI — nilainya disampel
+dari `GET /api/items` milikmu lalu di-cache untuk run berikutnya. Detail:
+[Referensi FK](/docs/refs).
+
+## 4. Terbitkan laporan
+
+```bash
+sonic-point report
+```
+
+```text
+✔ Published 1 endpoints via supabase.
+Session Report: https://sonicpoint.vercel.app/report/8f2c1d3e-...
+Session ID: 8f2c1d3e-...
+```
+
+Buka link itu: seluruh request body, response preview, status, dan latensi ada
+di halaman `/report/[sessionId]`.
+
+<Callout kind="warn" title="Link = kunci akses">
+Halaman report tidak memakai login — siapa pun yang memegang link bisa
+membacanya. Id session berupa UUID acak, jadi perlakukan link seperti nilai
+rahasia saat membagikannya.
+</Callout>
+
+## Dari sini ke mana?
+
+- [Referensi CLI](/docs/scan) — semua perintah dan flag.
+- [REPL interaktif](/docs/tui) — `/scan`, `/test`, `/report` dari satu prompt.
+- [Referensi FK](/docs/refs) — kenapa 404 basi tidak akan terjadi lagi.

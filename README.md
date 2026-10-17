@@ -1,10 +1,10 @@
 # SonicPoint
 
-Monorepo unified: CLI + dashboard web + Supabase backend.
+Monorepo unified: CLI + web (landing, dokumentasi, report viewer) + Supabase backend.
 
 ```
 SonicPoint/
-  apps/web/          # Next.js dashboard (public report viewer)
+  apps/web/          # Next.js: landing statis, docs MDX (/docs), report viewer (/report/[sessionId])
   packages/cli/      # sonic-point CLI (scan Express, test endpoints, publish report)
   supabase/
     migrations/      # source of truth schema (001_initial_schema.sql)
@@ -22,8 +22,9 @@ packages/cli (sonic-point)
   → kembalikan shareable URL (/report/:sessionId)
 
 apps/web (Next.js)
-  → baca dari Supabase (public read, tanpa auth)
-  → tampilkan di /report/[sessionId]
+  → /            : landing statis (tanpa Supabase, prerender saat build)
+  → /docs/[...]  : dokumentasi bahasa Indonesia dari MDX (prerender saat build)
+  → /report/[sessionId] : baca dari Supabase (public read, tanpa auth) — force-dynamic
 ```
 
 ## Commands (dari root, pakai pnpm)
@@ -36,6 +37,9 @@ pnpm build            # build CLI (tsc) + web (next build)
 pnpm typecheck        # tsc --noEmit semua workspace
 pnpm test             # node:test suites CLI via tsx
 ```
+
+> Kalau port 3000 dipakai aplikasi Express yang sedang diuji:
+> `pnpm --filter web exec next dev -p 3002`.
 
 ## Setup Supabase
 

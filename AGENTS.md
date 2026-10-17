@@ -6,11 +6,17 @@ Gabungan `sonic-dashboard` + `sonic-point` lama. Satu `pnpm-workspace.yaml` di r
 
 ```
 apps/web/src/
-  app/                    # App Router: page.tsx, projects/[projectId]/, report/[sessionId]/
-  components/             # StatusBadge, EndpointTable (presentational saja)
+  app/                    # App Router: page.tsx (landing statis), docs/[[...slug]]/ (MDX statis),
+                          # report/[sessionId]/ (force-dynamic), not-found.tsx, icon.svg
+  components/             # presentational: SiteHeader/Footer, CodeBlock, MethodChip/StatusBadge,
+                          # EndpointList (filter klien), mdx.tsx (map elemen MDX), ui.ts (kelas pill/card)
+  content/docs/*.mdx      # konten dokumentasi (Indonesia); urutan halaman = docsNav di lib/docs.ts
   lib/
     supabase.ts           # getSupabase() — lazy client, JANGAN bikin eager
-    queries.ts            # semua query DB, satu fungsi per kebutuhan page
+    queries.ts            # hanya untuk report: getSessionById, getEndpointsBySession
+    docs.ts               # docsNav + pembaca MDX (gray-matter, slugify, TOC, prev/next)
+    format.ts             # helper presentasi (JSON pretty, tanggal id-ID, latensi)
+    site.ts               # konstanta identitas (nama, GitHub, npm, perintah install)
   types/index.ts          # FE types, mirror schema SQL (sengaja tidak share dengan CLI)
 packages/cli/
   bin/index.ts → src/cli/program.ts (commander wiring, thin)
@@ -28,6 +34,7 @@ supabase/
 ```bash
 pnpm install                              # install semua workspace
 pnpm dev                                  # Next.js dev server (http://localhost:3000)
+pnpm --filter web exec next dev -p 3002   # kalau :3000 dipakai app Express (kasus umum)
 pnpm --filter web typecheck               # tsc --noEmit untuk apps/web
 pnpm --filter sonic-point typecheck       # tsc src+bin+tests (tsconfig.test.json)
 pnpm --filter sonic-point test            # node:test CLI via tsx
@@ -39,7 +46,11 @@ Tidak ada test runner untuk web — belum ada test. `next lint` deprecated di Ne
 
 ## Konvensi yang tidak obvious
 
-- **Semua pages web `force-dynamic`.** Data berubah tiap CLI publish, jadi tidak ada static prerender. Jangan hapus `export const dynamic = "force-dynamic"` — build akan gagal tanpa Supabase env kalau dihapus.
+- **Landing & docs statis; hanya report `force-dynamic`.** `/` dan `/docs/[[...slug]]` TIDAK boleh import Supabase — keduanya prerender saat build tanpa env. Jangan tambah `force-dynamic` di sana. `/report/[sessionId]` sebaliknya wajib `export const dynamic = "force-dynamic"`.
+- **`/docs/[[...slug]]` memakai `dynamicParams = false`** — semua file `.mdx` dibaca saat build (fs runtime dengan path dinamis tidak ikut ter-trace Vercel, jadi jangan pernah melepas ini). Konsekuensi: slug tak dikenal → 404 benar, tapi `next start` menulis log `NoFallbackError` (quirk Next, bukan bug — jangan "perbaiki" dengan menghapus `dynamicParams`).
+- **Docs engine hand-rolled:** `next-mdx-remote/rsc` + `gray-matter` + `remark-gfm`. Menambah halaman = file `.mdx` di `src/content/docs/` + entri di `docsNav` (`lib/docs.ts`) — build gagal kalau nav menunjuk file hilang. Judul h2/h3 harus teks polos; anchor & TOC dua-duanya lewat `slugify()` yang sama (jangan ubah sepihak).
+- **Design system di `@theme` `globals.css`** (tema amber, dark-only, tanpa toggle). Token di `:root` polos tidak menghasilkan utility Tailwind — jangan letakkan warna/ukuran di sana. Radius hanya `rounded-full`/`rounded-2xl`/`rounded-lg`; weight maksimum 500; tanpa shadow/gradien. Warna fungsional (`ok`, `err`, `method-*`) hanya untuk data di report viewer. Aturan lengkap: `apps/web/DESIGN.md`.
+- **Tidak ada listing project/session lagi.** Route `/projects/[projectId]` dihapus; viewer publik hanya `/report/[sessionId]` (unlisted by UUID, tanpa auth). Jangan hidupkan kembali query listing.
 - **Supabase client web harus lazy (`getSupabase()`).** Eager `createClient` di module scope merusak `next build` saat env belum diisi. Query selalu lewat `queries.ts`.
 - **Env web: client anon + server-only.** Client hanya `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` (read-only). Server-only (Vercel Production, jangan prefix `NEXT_PUBLIC_`): `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY` + `GEMINI_MODEL`(+`_CANDIDATES`), `SONIC_POINT_REPORT_BASE_URL`. Lihat `.env.example` + ADR-09.
 - **RLS: anon boleh SELECT, tidak boleh WRITE.** Write hanya lewat `service_role` — dipegang route `/api/report` di platform; CLI lokal tanpa key cuma bisa fallback menulis langsung kalau user memang punya service_role (mode advanced). Jangan tambah write policy untuk anon.

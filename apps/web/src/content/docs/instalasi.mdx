@@ -1,0 +1,54 @@
+---
+title: Instalasi
+description: Syarat minimal, cara pasang, dan verifikasi sonic-point dalam satu menit.
+---
+
+## Syarat
+
+| Kebutuhan | Keterangan |
+|---|---|
+| Node.js ≥ 22 | CLI memakai Ink 7 untuk REPL interaktif. |
+| Aplikasi Express | Sedang berjalan dan bisa diakses — default `http://localhost:3000`. |
+| Schema validasi (opsional) | Joi/Zod/Yup di folder standar; dipakai untuk menyusun payload yang masuk akal. |
+
+## Pasang dari npm
+
+```bash
+npm i -g sonic-point
+```
+
+Verifikasi:
+
+```bash
+sonic-point --version
+```
+
+## Posisi direktori itu penting
+
+Jalankan semua perintah **dari root project Express-mu**. Di situ SonicPoint
+mencari kode (router, schema) dan menulis file konfigurasi `.sonic-point.json`.
+
+```bash
+cd proyek-express-mu
+sonic-point init
+```
+
+<Callout kind="note" title="Tanpa argumen = REPL">
+`sonic-point` tanpa argumen membuka REPL interaktif dan membutuhkan TTY.
+Kalau outputnya di-pipe (non-TTY), CLI memberi pesan dan keluar — untuk
+scripting, pakai command mode seperti `sonic-point scan` / `send` / `report`.
+</Callout>
+
+## Rapikan .gitignore
+
+File `.sonic-point.json` memuat kredensial login-mu. Pastikan tidak ikut
+ter-commit:
+
+```gitignore
+.sonic-point.json
+.sonic-point/
+```
+
+## Langkah berikutnya
+
+[Quickstart](/docs/quickstart) — empat perintah sampai link laporan.

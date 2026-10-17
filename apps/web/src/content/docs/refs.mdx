@@ -1,0 +1,72 @@
+---
+title: Referensi FK (refs)
+description: Kenapa id relasi tidak pernah dikarang AI — dan bagaimana cache-nya memperbaiki diri.
+---
+
+## Masalahnya
+
+`POST /api/orders` membutuhkan `itemId` yang **benar-benar ada** di database-mu.
+Kalau nilainya dikarang (AI sekalipun menghasilkan UUID yang valid secara
+format), backend akan menjawab 404 — dan laporan jadi ramai kegagalan palsu
+yang bukan salah aplikasimu.
+
+## Alurnya
+
+```text
+POST /api/orders butuh itemId
+  1. refs.item ada di .sonic-point.json, host cocok, tidak stale
+       → pakai langsung (nol request tambahan)
+  2. belum ada / host beda / stale
+       → GET collection kandidat (/api/items) dengan token
+       → ambil id baris pertama → pakai + tulis sekali (baris notice)
+       → collection kosong / tidak ada route GET
+           → payload dibiarkan apa adanya → 404 dicatat jujur
+  3. respons 404 / pesan not-found, dan nilainya dari cache
+       → tandai stale → run berikutnya resample sendiri (self-heal)
+```
+
+Saat nilai baru disampel, CLI mencetak satu baris `↳ refs.item = 7f3a2b (saved)`
+sebelum tabel hasil — bukan bagian dari hasil tes, hanya catatan.
+
+## Deteksi field
+
+Nama field diurai jadi “noun” agar tidak salah target:
+
+| Field | Noun |
+|---|---|
+| `itemId`, `item_id`, `id_item` | `item` |
+| `plantAnalysisId`, `plant_analysis_id` | `plant-analysis` |
+| `id`, `uuid` (polos) | tidak match — itu id resource-nya sendiri |
+
+## Cara memilih collection
+
+Kandidat hanya route **GET statis** (bukan route ber-`:param`). Skor:
+cocok persis dengan segmen terakhir → tinggi; cocok setelah di-singular-kan
+(`items` → `item`) → di bawahnya; segmen parent menambah skor. Satu noun
+maksimal satu request sampling per run (ada memo), jadi sampling tidak
+membanjiri API-mu.
+
+## Cache dan self-heal
+
+- `refs` disimpan **flat per noun**, satu slot per entitas, lengkap dengan
+  `host` (base URL ternormalisasi) dan `capturedAt`.
+- Ganti `baseUrl` (mis. pindah environment) → entri dianggap miss → resample
+  sekali, bukan 404 sia-sia.
+- Ganti database tapi `baseUrl` sama → request berikutnya 404 → entri ditandai
+  `stale` → run berikutnya resample. Flag `stale` hilang setelah berhasil.
+- Penandaan `stale` hanya berlaku untuk nilai **dari cache**. 404 pada nilai
+  hasil sampling run berjalan dianggap masalah data, bukan cache.
+
+## Fixture manual
+
+Kamu boleh mengisi `refs` tangan untuk mengunci id tertentu (misalnya id seed
+yang memang stabil). Nilai manual menang dan tidak ditimpa selama `host`
+cocok dan flag `stale` tidak menyala.
+
+## Aturan yang tidak pernah dilanggar
+
+- SonicPoint **tidak pernah** memanggil endpoint producer (`POST /api/items`)
+  untuk “membuat” data agar referensi terpenuhi.
+- Nilai FK hasil sampling selalu menang atas keluaran AI.
+- File config ditulis dengan pola read-modify-write — kredensial dan token
+  tidak pernah tertimpa saat `refs` diperbarui.

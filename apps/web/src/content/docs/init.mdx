@@ -1,0 +1,60 @@
+---
+title: init
+description: Konfigurasi target pengujian (dan provider opsional) lewat tanya-jawab.
+---
+
+```bash
+sonic-point init
+```
+
+## Yang ditanya
+
+| Pertanyaan | Default | Keterangan |
+|---|---|---|
+| Base URL | `http://localhost:3000` | origin aplikasi Express-mu. |
+| Login endpoint | `/api/auth/login` | menerima `POST` `{ email, password }`. |
+| Email | — | kredensial user yang dipakai menguji. |
+| Password | — | tersimpan lokal di `.sonic-point.json`. |
+| Token field path | `data.token` | dotted path ke token di respons login. |
+| Token (opsional) | kosong | isi untuk melewati auto-login sepenuhnya. |
+
+## Hasil: `.sonic-point.json`
+
+```json
+{
+  "baseUrl": "http://localhost:3000",
+  "loginEndpoint": "/api/auth/login",
+  "email": "admin@example.com",
+  "password": "rahasia",
+  "tokenField": "data.token"
+}
+```
+
+Setelah ada pengujian, file ini juga menyimpan cache `refs` (id relasi hasil
+sampling) — lihat [Referensi FK](/docs/refs).
+
+## Provider opsional
+
+Di akhir, `init` menawarkan tiga hal; tekan Enter untuk melewati semuanya:
+
+- **Gemini API key** — mengaktifkan penyusunan payload dengan AI.
+- **Supabase URL + key** — hanya untuk mode publish langsung ke Supabase-mu
+  sendiri (advanced; default publish lewat platform).
+
+Yang diisi disimpan ke `~/.sonic-point/providers.json`, terpisah dari
+`.sonic-point.json` supaya kredensial target tidak bercampur dengan kredensial
+provider. Prioritas pembacaan: environment variable → file provider → env
+legacy. Detail: [Konfigurasi & provider](/docs/konfigurasi).
+
+## Kalau tidak ada provider
+
+CLI tetap jalan normal:
+
+- payload disusun oleh fallback deterministik (bukan AI);
+- `report` diterbitkan lewat platform, yang memegang kredensial Supabase-nya
+  sendiri.
+
+## Lihat juga
+
+- [REPL `/config`](/docs/tui) — bentuk interaktif yang mengedit file yang sama,
+  tanpa keluar dari prompt.

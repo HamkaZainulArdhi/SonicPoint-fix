@@ -1,0 +1,97 @@
+---
+title: scan
+description: Menemukan endpoint, schema, dan peta konteks dari kode Express-mu.
+---
+
+```bash
+sonic-point scan [--schema | --context | --snippets]
+```
+
+## Output default
+
+Daftar endpoint, dikelompokkan per file sumber:
+
+```text
+✔ Found 5 route files
+
+📂 src/routes/items.js
+GET      /api/items
+POST     /api/items
+GET      /api/items/:id
+
+📂 src/routes/orders.js
+GET      /api/orders
+POST     /api/orders
+```
+
+## Mode
+
+| Flag | Isi output |
+|---|---|
+| `--schema` | Endpoint body (POST/PUT/PATCH) + schema validasi ter-link + field `Required` / `Optional` |
+| `--context` | Controller, service, model, schema, auth per endpoint + `[missing: …]` untuk yang tak ketemu |
+| `--snippets` | JSON potongan kode di sekitar definisi endpoint (ke stdout) |
+
+<Callout kind="warn" title="Flag pertama menang">
+Urutan prioritas: `--context` → `--snippets` → `--schema` → default.
+`scan --context --schema` menjalankan mode context saja — bukan kombinasi.
+</Callout>
+
+## Contoh `--schema`
+
+```text
+✔ Found 2 body endpoints
+
+POST   /api/items
+────────────────────────
+Schema: createItemSchema
+
+Required:
+✓ name    string [min: 3]
+✓ price   number
+
+Optional:
+◯ stock   number
+```
+
+## Contoh `--context`
+
+```text
+Endpoints: 3
+Nodes:      9
+Edges:      8
+Unresolved: 1
+
+GET    /api/items
+────────────────────────
+  ✓ Controller:  listItems
+  ✓ Service:     itemsService
+  ◯ Model:       none
+  ◯ Schema:      none
+  ✓ Auth:        required
+
+POST   /api/orders [missing: model]
+────────────────────────
+  ✓ Controller:  createOrder
+  ◯ Service:     none
+  ◯ Model:       none
+  ✓ Schema:      createOrderSchema
+  ✓ Auth:        required
+```
+
+Baris `[missing: …]` menandai bagian rantai yang tidak terdeteksi — bukan
+error, hanya sinyal bahwa heuristik tidak menemukan apa pun di sana.
+
+## Cakupan dan batasan
+
+- Framework: **Express.js** saja.
+- Import yang di-resolve: **relatif** (`./`, `../`). Alias seperti `@/routes`
+  belum didukung.
+- File sumber: `.js` dan `.ts` (termasuk JSX via parser).
+- Nol endpoint = error — biasanya karena dijalankan dari direktori yang salah;
+  pastikan cwd adalah root project.
+
+## Lihat juga
+
+- [`scan --schema` → halaman schema](/docs/schema)
+- [REPL](/docs/tui) — `/scan` menyediakan versi interaktif dengan filter.

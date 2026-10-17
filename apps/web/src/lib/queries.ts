@@ -1,41 +1,5 @@
 import { getSupabase } from "./supabase";
-import type { Endpoint, Project, Session } from "@/types";
-
-export async function getProjects(): Promise<Project[]> {
-  const { data, error } = await getSupabase()
-    .from("projects")
-    .select("id, name, slug, created_at, updated_at")
-    .order("updated_at", { ascending: false });
-
-  if (error) throw new Error(`Failed to load projects: ${error.message}`);
-  return (data ?? []) as Project[];
-}
-
-export async function getProjectBySlug(slug: string): Promise<Project | null> {
-  const { data, error } = await getSupabase()
-    .from("projects")
-    .select("id, name, slug, created_at, updated_at")
-    .eq("slug", slug)
-    .single();
-
-  if (error) return null;
-  return data as Project;
-}
-
-export async function getSessionsByProject(
-  projectId: string,
-): Promise<Session[]> {
-  const { data, error } = await getSupabase()
-    .from("sessions")
-    .select(
-      "id, project_id, status, started_at, finished_at, total_tested, total_success, total_failed, total_skipped, created_at",
-    )
-    .eq("project_id", projectId)
-    .order("created_at", { ascending: false });
-
-  if (error) throw new Error(`Failed to load sessions: ${error.message}`);
-  return (data ?? []) as Session[];
-}
+import type { Endpoint, Session } from "@/types";
 
 export async function getSessionById(
   sessionId: string,

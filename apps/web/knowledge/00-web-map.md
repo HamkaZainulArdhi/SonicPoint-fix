@@ -7,28 +7,41 @@ tags:
 status: active
 source:
   - src/app/page.tsx
-  - src/app/layout.tsx
-  - src/app/projects/[projectId]/page.tsx
+  - src/app/docs/[[...slug]]/page.tsx
   - src/app/report/[sessionId]/page.tsx
+  - src/lib/docs.ts
 ---
 
-# Web Map — shareable report viewer
+# Web Map — landing, dokumentasi, report viewer
 
 >Vault Web. Read-only. Kontrak DB canonical di `SonicPoint/knowledge/03-contracts.md` (Vault Root) — tidak diduplikat.
 
-Alur: `Home (list projects) → Project (list sessions) → Report (summary + endpoint table)`.
+Rebuild fase-1 (Okt 2026): dashboard listing dihapus. Tiga muka:
 
-| Route | File | Data | Lihat |
-|---|---|---|---|
-| `GET /` | `src/app/page.tsx` | `getProjects()` → cards `Link /projects/[slug]` | [[01-pages]] |
-| `GET /projects/[projectId]` (`slug`) | `src/app/projects/[projectId]/page.tsx` | `getProjectBySlug + getSessionsByProject`, `notFound()` jika null | [[01-pages]] |
-| `GET /report/[sessionId]` (UUID) | `src/app/report/[sessionId]/page.tsx` | `getSessionById + getEndpointsBySession`, 4 stat cards + `EndpointTable` | [[01-pages]] |
+- `/` — landing statis ala proyek open source (tanpa Supabase → prerender saat build).
+- `/docs/[[...slug]]` — dokumentasi bahasa Indonesia dari file MDX, prerender saat build.
+- `/report/[sessionId]` — viewer publik satu sesi (unlisted by UUID, tanpa auth), `force-dynamic`.
 
-Stack: Next.js 15 App Router + React 19 + Tailwind v4 (`@import "tailwindcss"`, tanpa `tailwind.config.js`). Semua Server Components `async`, `params: Promise` + `await params`.
+| Route | File | Data | Render | Lihat |
+|---|---|---|---|---|
+| `GET /` | `src/app/page.tsx` | tidak ada | statis `○` | [[01-pages]] |
+| `GET /docs/[[...slug]]` | `src/app/docs/[[...slug]]/page.tsx` | `src/content/docs/*.mdx` via `lib/docs.ts` | SSG `●`, `dynamicParams = false` | [[01-pages]] |
+| `GET /report/[sessionId]` | `src/app/report/[sessionId]/page.tsx` | `getSessionById + getEndpointsBySession` | `ƒ` force-dynamic | [[01-pages]] |
+| 404 | `src/app/not-found.tsx` | — | statis | [[01-pages]] |
+| `POST /api/report`, `POST /api/ai/payload` | `src/app/api/**` | `service_role` (server-only) | `ƒ` | W-ADR-01 |
 
-Lihat data layer: [[02-components-queries]]. Config: [[03-config-decisions-todo]].
+Stack: Next.js 15 App Router + React 19 + Tailwind v4 (`@import "tailwindcss"`, plugin `@tailwindcss/postcss`, tanpa `tailwind.config.js`). Font Inter + JetBrains Mono via `next/font/google`; MDX hand-rolled: `next-mdx-remote/rsc` + `gray-matter` + `remark-gfm`.
 
-## AI guide
+## Token desain (ringkas — detail di `DESIGN.md` + `src/app/globals.css`)
 
-- Ubah tampilan → components saja. Ubah data → `lib/queries.ts` + kontrak Root.
-- Route Handler yang ada (`app/api/ai/payload`, `app/api/report`) **server-only gerbang secret** (ADR-09 Root) — bukan API data, bukan untuk FE. Jangan tambah write dari sisi Web: FE tetap read-only via anon key (ADR-02).
+- **Amber** (aksen): `lightning-yellow #ffe600`, `electric-gold #ffd000`, `amber-depth #a67c00`, `dark-amber #6b4e00`.
+- **Netral**: `snow → silver-mist → smoke → graphite → slate → charcoal → ash → obsidian (#121212) → ink (#0d0d0d)`.
+- **Fungsional (data saja)**: `ok`, `err`, `method-get/post/put/patch/delete/other` — dipakai chip method + status badge di report.
+- Skala teks `text-caption…text-display` (+`text-code` untuk blok kode) sudah membawa line-height & tracking. Radius hanya `rounded-full`/`rounded-2xl`/`rounded-lg`. `max-w-page` = 1200px.
+- Semua token WAJIB di blok `@theme` (yang di `:root` polos tidak menghasilkan utility).
+
+## Verifikasi web (tidak ada test runner)
+
+1. `pnpm --filter web typecheck`
+2. `pnpm --filter web build` (harus lolos juga tanpa env Supabase — landing & docs statis)
+3. Smoke manual: `next start -p 3002` lalu cek `/`, `/docs/quickstart`, `/report/<uuid>`. Tabel terminal di landing harus 44 kolom per baris box; anchor TOC docs harus sama dengan `id` heading.

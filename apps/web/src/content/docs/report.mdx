@@ -1,0 +1,64 @@
+---
+title: report
+description: Menerbitkan hasil send dan membagikan laporannya lewat satu link.
+---
+
+```bash
+sonic-point report [method] [endpoint]
+```
+
+## Filter opsional
+
+Kedua posisi bersifat opsional dan berguna kalau cache berisi banyak hasil:
+
+| Bentuk | Arti |
+|---|---|
+| `report` | Terbitkan seluruh session cache. |
+| `report GET` | Hanya hasil `GET`. |
+| `report POST /api/items` | Hanya `POST /api/items` (method di-uppercase, path dinormalisasi). |
+
+## Prasyarat
+
+Cache hasil dari [`send`](/docs/send) (atau `/test` di REPL). Kalau belum ada:
+
+```text
+No cached session found. Run sonic-point send first.
+```
+
+## Dua jalur publish
+
+1. **Lewat platform (default)** — CLI `POST {platform}/api/report`, dan server
+   platform menulis ke Supabase dengan `service_role` miliknya. **CLI tidak
+   butuh kredensial Supabase untuk ini.**
+2. **Langsung ke Supabase (advanced)** — kalau platform tidak terjangkau dan
+   kamu menyimpan `service_role` key di config lokal, CLI menulis langsung.
+   Mode ini hanya untuk yang paham risikonya; jangan pakai key itu di mesin
+   bersama.
+
+## Output
+
+```text
+✔ Published 1 endpoints via supabase.
+Session Report: https://sonicpoint.vercel.app/report/8f2c1d3e-...
+Session ID: 8f2c1d3e-...
+```
+
+## Isi halaman laporan
+
+- Empat angka ringkas: tested, passed, failed, skipped.
+- Daftar endpoint bergaya Swagger: chip method berwarna, path, status, latensi.
+- Tiap baris bisa dibuka — request body, response preview, auth yang dipakai,
+  dan pesan error (kalau ada) tanpa dipoles.
+
+Semua jenis hasil ikut terkirim: lolos, gagal (4xx/5xx/error jaringan),
+maupun di-skip beserta alasannya.
+
+## Exit code
+
+- `0` — publish sukses.
+- `1` — `skipped` (tanpa tujuan publish) atau `failed`.
+
+## Lihat juga
+
+[Self-hosting](/docs/self-hosting) — menjalankan platform dan Supabase-mu
+sendiri.

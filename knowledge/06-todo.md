@@ -14,7 +14,7 @@ Indeks saja. Detail eksekusi di vault masing-masing.
 
 | ID | Apa | Di mana |
 |---|---|---|
-| G-01 | Fix link `report → projects` (UUID vs slug) | Vault Web `03-config-decisions-todo.md` |
+| ~~G-01~~ | ~~Fix link `report → projects` (UUID vs slug)~~ — moot: route `/projects` dihapus (W-ADR-07) | Vault Web `03-config-decisions-todo.md` |
 | G-02 | Putuskan nasib tabel `schemas` (implementasikan publish/read atau hapus dari docs) | Vault CLI `05-decisions-todo.md` + kontrak [[03-contracts]] |
 | G-03 | Verifikasi `dotenv` / `.env` loading CLI | Vault CLI |
 | G-04 | Definisikan kapan `sessions.status='failed'` dipakai | Root + Vault CLI |

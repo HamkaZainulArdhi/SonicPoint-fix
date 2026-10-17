@@ -40,6 +40,7 @@ source:
 - Reason: Data berubah tiap publish; `next build` harus lolos tanpa env.
 - Impact: Jangan hapus `force-dynamic`. Jangan `createClient` di module scope.
 - Source: 3x `page.tsx:7`, `supabase.ts:8-25`.
+- **Amandemen (Okt 2026, rebuild FE fase-1)**: hanya `/report/[sessionId]` yang `force-dynamic`. Landing `/` dan `/docs/[[...slug]]` kini **statis** (tidak boleh import Supabase) — `force-dynamic` yang tersisa hanya di viewer. `getSupabase()` tetap lazy dan hanya dipanggil dari page report. Lihat W-ADR-04 + W-ADR-07 di Vault Web.
 
 ## ADR-05 — CLI layering: hanya commands.ts boleh print
 

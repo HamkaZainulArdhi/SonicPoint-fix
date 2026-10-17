@@ -14,7 +14,7 @@ source:
 
 | Istilah | Arti | Kunci |
 |---|---|---|
-| Project | Grup logis hasil scan/test. `slug` unique, dipakai CLI upsert + Web route `/projects/[slug]`. | `projects.slug` |
+| Project | Grup logis hasil scan/test. `slug` unique, dipakai CLI upsert; web tidak lagi menampilkan listing project (fase-1). | `projects.slug` |
 | Session | Satu run `sonic-point send` yang di-publish via `report`. Status `running → completed`. `failed` ada di CHECK tapi `closeSession` selalu tulis `completed`. | `sessions.status` |
 | Endpoint (row) | Satu baris per endpoint per session. Full history, no upsert. `path` = template (`/api/items/:itemId`), `resolved_path` = konkret (`/api/items/item-42`). | `endpoints.session_id + execution_order` |
 | Skipped | Hasil yang tidak di-request (param dinamis / tanpa payload). Disimpan sebagai `status_code='SKIPPED'`, `success=false`, `latency_ms=0`. | `store.ts:88-96` |

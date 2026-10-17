@@ -1,0 +1,77 @@
+---
+title: Self-hosting
+description: Menjalankan platform SonicPoint (viewer + API publish) di infrastrukturmu sendiri.
+---
+
+## Arsitektur publish
+
+```text
+CLI (tanpa key) ──POST /api/report──▶ platform (Vercel)
+                                        │ service_role
+                                        ▼
+                                     Supabase  ◀── viewer (anon, read-only)
+```
+
+CLI tidak pernah memegang kunci database. Server platform yang menulis, dan
+viewer publik membaca lewat anon key dengan policy SELECT saja.
+
+## 1. Siapkan Supabase
+
+1. Buat project di [supabase.com](https://supabase.com).
+2. Jalankan migration di `supabase/migrations/` **berurutan** — file
+   `001_initial_schema.sql` adalah sumber kebenaran skema.
+3. Pastikan RLS: `anon` boleh `SELECT`, tulis hanya untuk `service_role`.
+
+## 2. Isi environment platform
+
+Di dashboard hosting (Vercel → Settings → Environment Variables), bukan di repo:
+
+| Variabel | Folder terpakai | Keterangan |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | client | URL project Supabase. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | client | read-only; boleh terekspos. |
+| `SUPABASE_URL` | server | untuk route `/api/report`. |
+| `SUPABASE_SERVICE_ROLE_KEY` | server | **rahasia** — jangan pernah diberi prefix `NEXT_PUBLIC_`. |
+| `GEMINI_API_KEY` | server | untuk `/api/ai/payload` (payload AI). |
+| `GEMINI_MODEL` | server | model utama; mis. `gemini-3.5-flash`. |
+| `GEMINI_MODEL_CANDIDATES` | server | opsional, comma-separated, failover berurutan. |
+| `SONIC_POINT_REPORT_BASE_URL` | server | base URL untuk link `/report/:id`. |
+
+<Callout kind="warn" title="Jangan tertukar">
+Env tanpa prefix `NEXT_PUBLIC_` **hanya** untuk server. Kalau
+`SUPABASE_SERVICE_ROLE_KEY` sampai ke bundle browser, siapa pun bisa menulis
+ke database-mu.
+</Callout>
+
+## 3. Deploy platform
+
+1. Push repo ini (atau fork-mu) ke GitHub.
+2. Import ke Vercel; framework terdeteksi sebagai Next.js, build default.
+3. Isi environment di atas untuk Production, lalu deploy.
+4. Catat URL hasil deploy — dipakai di langkah berikutnya.
+
+## 4. Arahkan CLI ke platform-mu
+
+```bash
+export SONIC_POINT_PLATFORM_URL=https://proyekmu.vercel.app
+sonic-point report
+```
+
+Tanpa env itu, CLI memakai platform publik SonicPoint. Isi juga
+`SONIC_POINT_REPORT_BASE_URL` di server platform dengan domainmu agar link
+laporan menunjuk ke viewer-mu sendiri.
+
+## Publish langsung ke Supabase (advanced)
+
+Kalau kamu menyimpan `service_role` key di config lokal (`init`), CLI bisa
+menulis langsung ketika platform tidak terjangkau:
+
+```json title="~/.sonic-point/providers.json"
+{
+  "supabaseUrl": "https://xxx.supabase.co",
+  "supabaseKey": "<service_role>"
+}
+```
+
+Pahami risikonya: `service_role` melewati RLS dan berada di mesin lokalmu.
+Untuk pemakaian sehari-hari, biarkan CLI tanpa key dan publish lewat platform.

@@ -29,7 +29,7 @@ source:
 
 ## Bug terkonfirmasi
 
-- **B-01 slug vs UUID**: `report/[sessionId]/page.tsx:23` link `/projects/${session.project_id}` (UUID), tapi `projects/[projectId]` expect `slug` → `notFound()`. Fix di Vault Web.
+- **B-01 slug vs UUID — RESOLVED (moot, Okt 2026)**: route `/projects/[projectId]` dihapus di rebuild FE fase-1 (tanpa listing project/session); link bermasalah ikut terhapus. Lihat W-ADR-07 di Vault Web.
 
 ## NEEDS VERIFICATION (jangan diasumsikan)
 

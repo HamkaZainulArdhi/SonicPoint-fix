@@ -1,1 +1,116 @@
 @import "tailwindcss";
+
+/*
+ * Design tokens — sumber: apps/web/DESIGN.md (tema "Midnight + Amber/Sonic").
+ * Semua token WAJIB di blok @theme agar utility Tailwind (`bg-obsidian`,
+ * `text-heading`, `max-w-page`) benar-benar ter-generate. Jangan taruh warna
+ * di :root polos — itu tidak menghasilkan utility apa pun.
+ */
+@theme {
+  /* ── Aksen amber (menggantikan "Phosphor Green" di DESIGN.md) ────────── */
+  --color-lightning-yellow: #ffe600;
+  --color-electric-gold: #ffd000;
+  --color-amber-depth: #a67c00;
+  --color-dark-amber: #6b4e00;
+
+  /* ── Netral terang → gelap ───────────────────────────────────────────── */
+  --color-snow: #fafafa;
+  --color-silver-mist: #b4b4b4;
+  --color-smoke: #898989;
+  --color-graphite: #4d4d4d;
+  --color-slate: #393939;
+  --color-charcoal: #2e2e2e;
+  --color-ash: #242424;
+  --color-obsidian: #121212;
+  --color-ink: #0d0d0d;
+
+  /*
+   * Warna fungsional — HANYA untuk data (status hasil tes & chip method),
+   * bukan dekorasi. Ini satu-satunya penyimpangan sadar dari aturan
+   * "monokrom + satu aksen" DESIGN.md (keputusan: report bergaya Swagger).
+   */
+  --color-ok: #3fb950;
+  --color-err: #f85149;
+  --color-method-get: #6cb6ff;
+  --color-method-post: #3fb950;
+  --color-method-put: #e3903f;
+  --color-method-patch: #39c9bd;
+  --color-method-delete: #f85149;
+  --color-method-other: #b4b4b4;
+
+  /* ── Skala teks (line-height & tracking menempel di utility) ─────────── */
+  --text-caption: 12px;
+  --text-caption--line-height: 1.5;
+  --text-caption--letter-spacing: -0.084px;
+
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 1.43;
+  --text-body-sm--letter-spacing: -0.098px;
+
+  --text-body: 16px;
+  --text-body--line-height: 1.5;
+  --text-body--letter-spacing: -0.112px;
+
+  --text-subheading: 18px;
+  --text-subheading--line-height: 1.38;
+  --text-subheading--letter-spacing: -0.126px;
+
+  --text-heading-sm: 24px;
+  --text-heading-sm--line-height: 1.33;
+  --text-heading-sm--letter-spacing: -0.168px;
+
+  --text-heading: 36px;
+  --text-heading--line-height: 1.2;
+  --text-heading--letter-spacing: -0.252px;
+
+  --text-display: 72px;
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.504px;
+
+  /* Tambahan di luar 7 ukuran DESIGN.md: blok kode & output terminal. */
+  --text-code: 13px;
+  --text-code--line-height: 1.6;
+
+  /* ── Layout ──────────────────────────────────────────────────────────── */
+  --container-page: 1200px;
+}
+
+/*
+ * Font dari `next/font` — pakai `@theme inline` supaya nilai variabel runtime
+ * (dipasang di <html>) ikut terbaca utility `font-sans` / `font-mono`.
+ */
+@theme inline {
+  --font-sans:
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, sans-serif;
+  --font-mono:
+    var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, "Liberation Mono", monospace;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-obsidian font-sans text-body text-snow antialiased;
+  }
+
+  ::selection {
+    background-color: var(--color-lightning-yellow);
+    color: var(--color-obsidian);
+  }
+
+  /* Fokus = garis amber tipis (DESIGN.md: border kromatik, bukan glow). */
+  :focus-visible {
+    outline: 1px solid var(--color-electric-gold);
+    outline-offset: 2px;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-slate) transparent;
+  }
+}

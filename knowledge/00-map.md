@@ -21,7 +21,7 @@ SonicPoint v2.0.0 = monorepo unified (`sonicpoint`, private). Gabungan `sonic-da
 
 ```
 SonicPoint/
-  apps/web/       # Next.js dashboard, public report viewer
+  apps/web/       # Next.js: landing statis + docs MDX + report viewer publik
   packages/cli/   # sonic-point CLI, scan Express + test + publish
   supabase/       # migrations source of truth + seed.sql
 ```

@@ -1,0 +1,57 @@
+---
+title: Pendahuluan
+description: Apa itu SonicPoint, masalah apa yang diselesaikannya, dan untuk siapa tool ini dibuat.
+---
+
+SonicPoint adalah CLI untuk **API Express.js**: dia membaca kode router-mu,
+menemukan semua endpoint, menyusun payload dari schema validasi yang sudah kamu
+tulis, menguji tiap endpoint dengan token login asli, lalu menerbitkan laporan
+yang bisa dibuka lewat satu link.
+
+Singkatnya: **scan → uji → bagikan.**
+
+## Masalah yang diselesaikan
+
+Menguji API secara manual itu berulang dan cepat basi:
+
+- payload contoh di Postman tidak ikut berubah saat schema validasi berubah;
+- endpoint baru tidak ketahuan siapa yang belum pernah diuji;
+- id relasi (`itemId`, `lahanId`) yang dikarang AI menghasilkan 404 palsu;
+- hasil uji berceceran di chat dan tidak bisa dibagikan dengan rapi.
+
+SonicPoint mengambil alih bagian yang mekanis itu — tanpa menambah satu baris
+pun ke kode aplikasimu.
+
+## Alur besar
+
+```text
+kode Express ──scan──▶ daftar endpoint + schema + konteks
+                          │
+                    send ──┼── login → token
+                          │   payload dari schema (± AI)
+                          │   id relasi disampel dari API-mu
+                          ▼
+             .sonic-point/session-cache.json
+                          │
+                   report ─┴── publish ──▶ /report/:sessionId
+```
+
+## Untuk siapa
+
+Kamu yang menulis API Express dengan middleware validasi (Joi, Zod, atau Yup)
+dan ingin tahu — dengan bukti, bukan asumsi — endpoint mana yang benar-benar
+jalan.
+
+## Yang perlu diketahui sejak awal
+
+<Callout kind="warn" title="Batasan sadar">
+SonicPoint fokus pada **Express.js** dengan import relatif. Folder validasi
+yang dipindai juga spesifik — lihat [schema](/docs/schema). Konfigurasi awal
+memerlukan login endpoint milik aplikasimu. Semua batasan dibahas di [FAQ](/docs/faq).
+</Callout>
+
+## Langkah berikutnya
+
+1. [Instalasi](/docs/instalasi) — pasang CLI-nya.
+2. [Quickstart](/docs/quickstart) — dari nol sampai link laporan.
+3. [Cara kerja](/docs/cara-kerja) — memahami pipeline sebelum memakainya.

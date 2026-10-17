@@ -1,0 +1,59 @@
+---
+title: schema
+description: Ekstraksi schema validasi Joi, Zod, dan Yup — lalu menghubungkannya ke endpoint.
+---
+
+```bash
+sonic-point schema
+```
+
+## Folder yang dipindai
+
+Hanya lima direktori standar ini (relatif ke root project):
+
+```text
+src/validation/
+src/validators/
+src/schemas/
+src/schema/
+src/validations/
+```
+
+## Format output
+
+```text
+📦 src/schemas/item.schema.js (zod)
+
+  createItemSchema
+    - name: string, required, min: 3
+    - price: number, required
+    - stock: number, optional
+```
+
+Tiap properti membawa: tipe, `required`/`optional`, format (`email`, `uuid`,
+...), dan constraint (`min: 3`). Framework terdeteksi dari isi file (`Joi.`,
+`z.`, `Yup.`) dengan fallback pemeriksaan import.
+
+## Menghubungkan schema ke endpoint
+
+`scan --schema` mem-link schema ke endpoint lewat **middleware validasi yang
+disebut eksplisit** di definisi route — misalnya `validateBody(createItemSchema)`.
+Link yang tidak eksplisit tidak ditebak:
+
+| Keadaan | Yang tampil |
+|---|---|
+| Middleware validasi cocok dengan schema | `Schema: createItemSchema` |
+| Endpoint body tanpa schema | `Schema: unknown` |
+| Endpoint GET/DELETE | tidak muncul (bukan endpoint body) |
+
+## Batasan
+
+- Hanya folder di atas; schema di lokasi lain di luar cakupan.
+- File yang gagal di-parse dilewati tanpa menggagalkan seluruh scan. Untuk
+  men-debug, jalankan dengan `SONIC_DEBUG_SCHEMA=true`.
+- Nama schema dicocokkan setelah dinormalisasi (huruf kecil, karakter non
+  alfanumerik dibuang) — dua nama yang mirip bisa dianggap cocok.
+
+## Lihat juga
+
+[scan](/docs/scan) — semua mode pemindaian.

@@ -1,0 +1,80 @@
+---
+title: send
+description: Menguji endpoint — login, payload dari schema, id relasi hasil sampling, lalu simpan hasilnya.
+---
+
+```bash
+sonic-point send [endpoint] [--method <method>]
+```
+
+## Memilih target
+
+| Bentuk | Yang diuji |
+|---|---|
+| `send` | Semua endpoint **GET** — scope default yang aman (tanpa operasi tulis). |
+| `send /api/items` | Tetap semua GET — argumen path **diabaikan** tanpa `--method`. |
+| `send --method POST /api/items` | Tepat satu endpoint (method + path; trailing slash dinormalisasi). |
+| `send --method POST` | Error: `--method` wajib disertai path. |
+
+<Callout kind="warn" title="Perilaku yang mudah menjebak">
+Path tanpa `--method` sengaja diabaikan — `send` default-nya “semua GET”.
+Untuk satu endpoint, selalu tulis method dan path sekaligus.
+</Callout>
+
+## Yang terjadi saat run
+
+1. **Login** — pakai token tersimpan, atau login ulang dengan kredensial di
+   `.sonic-point.json` (token baru di-cache agar run berikutnya tidak login lagi).
+2. **Cek server** — `GET /` ke origin target.
+3. **Baca schema** dan siapkan resolver id relasi — hanya kalau ada endpoint
+   body (POST/PUT/PATCH).
+4. **Urut sampling dulu**: endpoint statis (mis. `GET /api/items`) dieksekusi
+   sebelum endpoint ber-`:param`, supaya ada data untuk disampel.
+5. **Per endpoint** — isi `:param`, susun payload, kirim request dengan
+   `Authorization: Bearer`, catat status dan latensi.
+6. **Simpan** seluruh hasil ke `.sonic-point/session-cache.json`.
+
+## `:param` — id dari API-mu
+
+Id untuk `:param` tidak ditebak:
+
+```text
+GET /api/items/:itemId
+  → cari collection GET kandidat (skor: parent path, kecocokan singular)
+  → GET /api/items dengan token → ambil id baris pertama
+  → simpan ke cache → substitusi: /api/items/7f3a2b
+```
+
+- Satu cache per **nama param** untuk seluruh run — `:id` di dua endpoint
+  berbeda memakai nilai yang sama, `:itemId` dan `:orderId` berbeda.
+- Di command mode, `:param` non-GET yang tak bisa disampel boleh memunculkan
+  prompt untuk mengisi nilai manual. Di REPL tidak pernah ada prompt — yang
+  tak tersampel di-skip dengan menyebut id konkret yang bisa kamu pakai.
+
+## Payload
+
+- **Dengan Gemini key** — AI mengisi payload sesuai schema; nilai relasi
+  hasil sampling “dipin” dan selalu menang atas keluaran model.
+- **Tanpa AI / AI gagal** — fallback deterministik mengisi field `required`
+  dengan contoh wajar (enum pertama, email, UUID, tanggal ISO, dan seterusnya).
+
+## Contoh output
+
+```text
+↳ refs.item = 7f3a2b (saved)
+
+┌──────────┬─────────────────┬─────────────┐
+│ METHOD   │ ENDPOINT        │ STATUS      │
+├──────────┼─────────────────┼─────────────┤
+│ POST     │ /api/orders     │ ✔ (201)     │
+└──────────┴─────────────────┴─────────────┘
+
+Tested 1: 1 passed · 0 failed · 0 skipped
+```
+
+Di bawah tabel, tiap hasil runtut ditampilkan lagi lengkap dengan `Request:`
+(payload JSON) dan `Response:` (preview), atau `Skipped …` beserta alasannya.
+
+## Setelah send
+
+Hasil di cache siap diterbitkan: [`sonic-point report`](/docs/report).

@@ -1,0 +1,69 @@
+---
+title: REPL interaktif
+description: Satu prompt untuk /scan, /schema, /context, /test, /report, dan /config.
+---
+
+```bash
+sonic-point
+```
+
+Tanpa argumen, CLI masuk ke REPL (butuh TTY). Semua slash command memanggil
+core yang sama dengan command mode — hasilnya konsisten.
+
+## Slash command
+
+| Command | Fungsi |
+|---|---|
+| `/scan` | Daftar endpoint, grup per file. |
+| `/schema [METHOD] [PATH]` | Endpoint body + schema + Required/Optional. |
+| `/context [METHOD] [PATH]` | Rantai controller/service/model/schema/auth. |
+| `/test METHOD [PATH]` | Jalankan pengujian (method wajib). |
+| `/report [METHOD] [PATH]` | Terbitkan hasil cache. |
+| `/config` | Edit kredensial target lewat tanya-jawab di prompt. |
+| `/clear` / `/quit` | Bersihkan transcript / keluar. |
+
+Filter untuk `/schema`, `/context`, dan `/report` bersifat case-insensitive,
+trailing slash dinormalisasi, dan path konkret juga cocok dengan template
+`:param`:
+
+```text
+/schema post /api/items
+/context GET /api/items/7f3a2b
+/report POST /api/items
+```
+
+## `/test` berbeda dari `send` — sengaja
+
+| Bentuk | `/test` (REPL) | `send` (command mode) |
+|---|---|---|
+| Tanpa argumen | Error: method wajib | Semua GET |
+| Path tanpa method | Error: method tidak dikenal | Path diabaikan |
+| `POST` tanpa path | Error: butuh path | Error juga |
+| `:param` tak tersampel | `skipped` + hint id konkret (tidak pernah prompt) | Prompt isian manual untuk non-GET |
+| Tanpa kredensial | `Run /config first` | Prompt `init`-style |
+
+Prasyarat `/test`: `.sonic-point.json` sudah ada (lewat `/config` atau `init`).
+Hasil otomatis tersimpan ke cache dan langsung siap di-`/report`. Satu run
+dalam satu waktu — input lain menunggu sampai selesai.
+
+## `/config` — enam langkah
+
+`Base URL → Login endpoint → Email → Password → Token field path → Token`.
+Kontrak file identik dengan [`init`](/docs/init): Enter memakai nilai dalam
+tanda kurung, penulisan hanya terjadi di langkah terakhir, dan `Esc` membatalkan
+tanpa menulis. Password selalu ter-mask.
+
+## Keyboard
+
+- `↑` / `↓` — riwayat input (juga saat overlay saran terbuka: pindah pilihan
+  saran). Lebih dari satu kali `↓` di ujung mengosongkan buffer.
+- `Enter` — jalankan; kalau token perintah belum lengkap, `Enter` melengkapi
+  saran (maksimal dua kali).
+- `Esc` — tutup saran / batalkan flow.
+- Riwayat hanya untuk sesi berjalan (tanpa file); `/clear` tidak menghapusnya.
+
+## Batasan sadar
+
+- Input append-only (tanpa pindah kursor ke tengah baris).
+- Transcript menyimpan 200 entri terakhir.
+- Daftar endpoint panjang belum dipaginasi.

@@ -1,0 +1,93 @@
+---
+title: Konfigurasi & provider
+description: Semua file konfigurasi, environment variable, dan urutan prioritasnya.
+---
+
+## File di dalam project
+
+### `.sonic-point.json`
+
+Dibuat oleh [`init`](/docs/init) atau `/config`:
+
+```json
+{
+  "baseUrl": "http://localhost:3000",
+  "loginEndpoint": "/api/auth/login",
+  "email": "admin@example.com",
+  "password": "rahasia",
+  "tokenField": "data.token",
+  "refs": {
+    "item": {
+      "id": "7f3a2b",
+      "source": "GET /api/items",
+      "host": "http://localhost:3000",
+      "capturedAt": "2026-10-17T02:14:03.000Z"
+    }
+  }
+}
+```
+
+`refs` muncul dan diperbarui otomatis setelah pengujian; lihat
+[Referensi FK](/docs/refs).
+
+### `.sonic-point/session-cache.json`
+
+Hasil `send` (atau `/test`) terakhir — jembatan ke `report`.
+
+<Callout kind="warn" title="Jangan ikutkan ke git">
+`.sonic-point.json` memuat email, password, dan token. Tambahkan
+`.sonic-point.json` dan `.sonic-point/` ke `.gitignore`.
+</Callout>
+
+## File di home
+
+`~/.sonic-point/providers.json` menyimpan provider opsional:
+
+```json
+{
+  "geminiApiKey": "AIza...",
+  "supabaseUrl": "https://xxx.supabase.co",
+  "supabaseKey": "<service_role, only for advanced direct publish>"
+}
+```
+
+Lokasinya bisa dipindah lewat `SONIC_POINT_HOME` — berguna untuk isolasi
+(CI, testing, atau mesin bersama).
+
+## Environment variable
+
+| Variabel | Fungsi |
+|---|---|
+| `SONIC_POINT_GEMINI_API_KEY` | Gemini key (menimpa file). |
+| `SONIC_POINT_SUPABASE_URL` / `SONIC_POINT_SUPABASE_KEY` | Kredensial Supabase untuk publish langsung (advanced). |
+| `SONIC_POINT_PLATFORM_URL` | Base URL platform publish. Default: platform publik SonicPoint. |
+| `SONIC_POINT_REPORT_BASE_URL` | Base URL link report (dipakai publish langsung). |
+| `SONIC_POINT_PROJECT_ID` | Menimpa identitas project (slug/nama) saat publish. |
+| `SONIC_POINT_HOME` | Lokasi alternatif folder `~/.sonic-point`. |
+
+## Urutan prioritas
+
+```text
+env SONIC_POINT_*  →  file provider  →  env legacy (dengan peringatan)  →  tidak ada
+```
+
+Env legacy yang masih dibaca (sambil memberi saran migrasi):
+`GEMINI_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`,
+dan `SUPABASE_ANON_KEY`. Kalau kedeteksi di `.env` project, CLI menyarankan
+pindah ke `SONIC_POINT_*` atau `init`.
+
+## Identitas project saat publish
+
+Nama project ditentukan berurutan:
+
+1. `SONIC_POINT_PROJECT_ID` (kalau diisi),
+2. `name` di `package.json`.,
+3. nama folder project.
+
+Nilai itu di-slug-kan (huruf kecil, non-alfanumerik → `-`) dan dipakai sebagai
+kunci upsert di tabel `projects` saat publish.
+
+## Lihat juga
+
+[Self-hosting](/docs/self-hosting) — mengisi env platform (bukan CLI) untuk
+deploy sendiri.

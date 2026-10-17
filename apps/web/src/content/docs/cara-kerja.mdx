@@ -1,0 +1,73 @@
+---
+title: Cara kerja
+description: Tiga tahap SonicPoint — scan, run, report — plus file apa saja yang ditulis.
+---
+
+## Tiga tahap
+
+```text
+scan ──▶ run (send) ──▶ report
+```
+
+### 1. Scan — membaca kode, bukan server
+
+SonicPoint menelusuri root project (melewati `node_modules`, `.git`, `dist`,
+`build`, `coverage`, `.next`) dan membaca AST tiap file dengan `@babel/parser`:
+
+- import relatif di-resolve (`./routes/items` → `routes/items.js`);
+- `app.use("/api", router)` dipakai menyusun prefix mount;
+- pemanggilan `router.get/post/...` dikumpulkan sebagai endpoint;
+- import melingkar aman (ada visited set), dan file router yang tidak di-mount
+  siapa pun tetap dianggap entry point.
+
+Karena sumbernya kode, hasilnya deterministik dan tidak butuh server hidup.
+
+### 2. Run — login, susun payload, uji
+
+`sonic-point send` menjalankan satu sesi:
+
+1. **Login** — pakai token dari `.sonic-point.json` kalau ada; kalau tidak,
+   `POST` ke `loginEndpoint` dengan email/password, lalu token diambil dari
+   `tokenField` (dotted path, misalnya `data.token`).
+2. **Cek server** — `GET /` ke origin untuk memastikan target hidup.
+3. **Per endpoint** — isi `:param` dengan id hasil sampling, susun body dari
+   schema validasi, lalu kirim request dengan header `Authorization: Bearer`.
+4. **Simpan** hasil ke `.sonic-point/session-cache.json` — jembatan menuju
+   `report`.
+
+### 3. Report — publikasi dan viewer
+
+`sonic-point report` mengirim sesi dari cache ke platform (`POST /api/report`).
+Server platform memegang `service_role` Supabase dan menulis
+`projects → sessions → endpoints`. Balikannya: `sessionId` plus link
+`/report/[sessionId]` yang siap dibagikan.
+
+## Peran AI — pelengkap, bukan sumber kebenaran
+
+Kalau ada Gemini API key, AI dipakai untuk **mengisi bentuk** payload dari
+schema validasi. Tanpa key (atau kalau AI gagal), SonicPoint memakai fallback
+deterministik: field `required` diisi contoh wajar — enum pertama, email,
+UUID, tanggal ISO, dan seterusnya.
+
+Satu hal yang tidak pernah diserahkan ke AI: **nilai relasi/foreign key**.
+`itemId`, `lahanId`, dan sejenisnya di-sampling dari collection GET milikmu,
+dan nilai hasil sampling selalu menang atas keluaran model. Detail:
+[Referensi FK](/docs/refs).
+
+<Callout kind="warn" title="Request gagal itu data, bukan bug">
+Endpoint yang menulis data akan benar-benar menulis ke database aplikasimu
+(itu tujuan pengujian). Sebaliknya, kalau data yang dibutuhkan tidak ada,
+SonicPoint **tidak** memalsukan payload — endpoint dibiarkan gagal dan laporan
+menuliskannya apa adanya.
+</Callout>
+
+## File yang ditulis
+
+| File | Isi | Ditulis oleh |
+|---|---|---|
+| `.sonic-point.json` | base URL, kredensial login, token, cache `refs` | `init`, `/config`, `send` |
+| `.sonic-point/session-cache.json` | hasil `send` terakhir | `send`, `/test` |
+| `~/.sonic-point/providers.json` | Gemini key & Supabase (opsional) | `init` |
+
+Ada juga `~/.sonic-point/` yang bisa dipindah dengan env `SONIC_POINT_HOME`.
+Ekosistem konfigurasi lengkap: [Konfigurasi & provider](/docs/konfigurasi).

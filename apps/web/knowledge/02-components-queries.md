@@ -7,10 +7,13 @@ tags:
   - data
 status: active
 source:
-  - src/components/EndpointTable.tsx
+  - src/components/mdx.tsx
+  - src/components/EndpointList.tsx
   - src/components/StatusBadge.tsx
+  - src/components/MethodChip.tsx
   - src/lib/supabase.ts
   - src/lib/queries.ts
+  - src/lib/format.ts
   - src/types/index.ts
 ---
 
@@ -20,22 +23,42 @@ source:
 
 `getSupabase()` + `cached` singleton. `createClient(url, anonKey, {auth:{persistSession:false, autoRefreshToken:false}})` saat pertama dipanggil. Error jelas (`Copy .env.example ke .env.local`) baru saat request — agar `next build` lolos tanpa env. Anon read-only.
 
-## Queries (`lib/queries.ts`) — satu fungsi per page
+>Catatan Next: `process.env.NEXT_PUBLIC_*` di-**inline saat build**. Untuk menguji viewer dengan backend tiruan, env harus disuntik waktu `next build`, bukan waktu `next start`.
+
+## Queries (`lib/queries.ts`) — hanya untuk report
 
 | Fungsi | Query | Order |
 |---|---|---|
-| `getProjects()` | `projects(id,name,slug,created_at,updated_at)` | `updated_at desc`, throw on error |
-| `getProjectBySlug` | `.eq(slug).single()` | return `null` → `notFound()` |
-| `getSessionsByProject` | `sessions(...totals,created_at)` eq `project_id` | `created_at desc`, throw |
-| `getSessionById` | sama, eq `id`, `.single()` | null on error |
+| `getSessionById` | `sessions(...totals)` eq `id`, `.single()` | null on error |
 | `getEndpointsBySession` | `endpoints(...)` eq `session_id` | `execution_order asc`, throw |
 
-Tanpa cache/revalidate, tanpa client fetch, tanpa write. Kolom lengkap lihat kontrak Root.
+Query listing project/session sudah **dihapus** (bareng route `/projects`). Tanpa cache/revalidate, tanpa client fetch, tanpa write. Kolom lengkap lihat kontrak Root.
 
-## Components (presentational)
+## Components
 
-- **EndpointTable.tsx** `({endpoints: Endpoint[]})`: `# | Method | Path | Status | Latency`. `methodColor()`: GET sky, POST green, PUT/PATCH amber, DELETE red. `resolved_path` + sub-teks `path` jika beda. Empty: `No endpoints in this session.`
-- **StatusBadge.tsx** `({success, statusCode})`: pill hijau `✓ <code>` / merah `✗ <code>`, `—` jika null.
+### Shell & util
+
+- **SiteHeader / SiteFooter** — server; brand bolt amber + wordmark mono; nav link `silver-mist → snow`; satu pill primary "Quickstart".
+- **ui.ts** — bukan komponen: kelas bersama. `pill("primary"|"ghost","md"|"sm")` (primary = fill amber + teks **obsidian**), `card`, `well`.
+- **BoltMark** — svg bolt `currentColor`.
+- **CopyButton** — client, `navigator.clipboard`, label berubah "Tersalin" 1,6 dtk; gagal senyap (http/izin).
+- **CodeBlock** — client; well `bg-ink` + tombol salin mengambang; dipakai MDX (`pre`) dan report (`code=` string). `className` default `mt-6`, bisa di-override (`mt-2`).
+
+### Docs
+
+- **mdx.tsx** — map elemen MDX → gaya DESIGN (h2/h3 dengan `id={slugify(textOf(children))}`, p/ul/a/table/code/pre/dll). Heading pakai `scroll-mt-24`.
+- **Callout** — `kind="note"|"warn"` (+title); `warn` = border amber + judul electric-gold.
+- **DocsChrome** — `DocsSidebar` (aktif amber), `DocsToc`, `DocsPager`.
+
+### Report
+
+- **MethodChip** — pill mono 12px, lebar 64px; border+wash 10% warna method (Swagger dark: GET biru, POST hijau, PUT oranye, PATCH teal, DELETE merah).
+- **StatusBadge** — `✓ <code>` ok / `✗ <code>` err / `SKIPPED` netral (`isSkippedStatus`: CLI menulis string `"SKIPPED"`, bukan angka) / `—` kalau null.
+- **EndpointList** — client; state lokal `useState` (method + query), method chips `SEMUA + unik`, input cari path, counter `n / total`; tiap endpoint `<details>` (tanpa state library): summary = chip + `resolved_path` + badge `AI` + latensi + status + chevron `group-open:rotate-90`; isi = grid metadata (path template/resolved/auth/urutan/diuji) + `Request body`/`Response preview` (CodeBlock) + error/skip (`Alasan skip`).
+
+## Helper presentasi (`lib/format.ts`)
+
+`prettyJson`, `prettyMaybeJson` (only if starts `{`/`[`), `isSkippedStatus`, `formatLatency` (skip → `—`), `formatDateTime` (id-ID, `Asia/Jakarta`), `formatDuration` (ms → `dtk`/`mnt`).
 
 ## Types (`types/index.ts`)
 
@@ -45,3 +68,4 @@ Tanpa cache/revalidate, tanpa client fetch, tanpa write. Kolom lengkap lihat kon
 
 - Kolom baru → ubah `select` di sini + `types/index.ts` + kontrak Root + CLI `store.ts` bersamaan.
 - `status_code` = `number | string | null` (DB `text`, CLI tulis `String(status)` / `'SKIPPED'`).
+- Interaksi UI report: `<details>` + `useState` lokal saja — tanpa state library (W-ADR-02 amandemen).

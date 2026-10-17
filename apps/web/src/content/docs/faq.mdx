@@ -1,0 +1,73 @@
+---
+title: FAQ
+description: Pertanyaan yang paling sering muncul — beserta jawaban jujurnya.
+---
+
+## Kenapa baru Express?
+
+Scanner membaca pemanggilan `app.get/post/...` dan `app.use(prefix, router)`
+yang khas Express. Framework lain punya bentuk routing yang berbeda, jadi
+mendukungnya butuh lapisan pembaca baru — itu roadmap, bukan janji. Fokus
+sekarang: satu framework, tapi rapi.
+
+## Kenapa `send /api/items` mengabaikan path-nya?
+
+Itu perilaku yang disengaja. Tanpa `--method`, `send` berarti “uji semua GET”
+— scope default yang aman. Supaya tidak ada orang mengira path-nya filter,
+argumennya diabaikan, bukan ditebak-tebak. Untuk satu endpoint:
+
+```bash
+sonic-point send --method GET /api/items
+```
+
+## Aku dapat `200` tapi `data: []` — itu bug?
+
+Bukan. Payload-nya valid dan backend menjawab sukses; datanya saja yang tidak
+cocok (mis. id dari cache lama). Kalau butuh id tertentu, uji path konkret
+langsung: `/test GET /api/items/7f3a2b`.
+
+## Apakah CLI perlu Supabase key?
+
+Tidak. Publish default lewat platform, dan platform yang memegang
+`service_role`. Key Supabase lokal hanya untuk mode advanced: menulis langsung
+saat platform tidak terjangkau.
+
+## Apakah Gemini wajib?
+
+Tidak. Tanpa key, penyusunan payload memakai fallback deterministik. AI hanya
+membuat payload lebih “masuk akal” untuk skema yang kompleks.
+
+## Apakah kodeku dikirim ke suatu tempat?
+
+Scan berjalan lokal — kode tidak dikirim ke mana pun. Yang dikirim saat
+`report` hanyalah data hasil tes: method, path, payload, preview respons,
+status, dan latensi. `--snippets` mencetak potongan kode ke terminal lokal
+saja.
+
+## Endpoint POST-ku benar-benar menulis data. Aman?
+
+Itu memang cara mengujinya — SonicPoint mengirim request sungguhan dengan data
+sungguhan. Untuk eksperimen yang lebih aman, arahkan `baseUrl` ke environment
+staging/seed, atau uji ke database dev. SonicPoint **tidak** pernah membuat
+data sendiri di luar endpoint yang kamu uji.
+
+## Dipakai di CI tanpa TTY — bisa?
+
+Bisa, dalam command mode: `scan`, `send`, `report` semuanya non-interaktif.
+REPL (`sonic-point` tanpa argumen) butuh TTY dan akan memberi pesan lalu
+keluar kalau di-pipe. Untuk login tanpa prompt, isi `token` di
+`.sonic-point.json` (atau lewat mekanisme secret CI-mu) agar tidak ada tanya
+email/password.
+
+## Siapa pun bisa membuka link report-ku?
+
+Ya — viewer tidak memakai login; id session adalah UUID acak yang berperan
+seperti kunci. Perlakukan link seperti nilai rahasia. Kalau butuh akses
+terkontrol, tunggu dukungan auth di roadmap, atau self-host dengan aturan
+aksesmu sendiri.
+
+## Apakah jalan di Windows?
+
+Ya. CLI diuji di Windows Terminal; REPL Ink berjalan di sana termasuk
+navigasi panah. Untuk rendering warna dan simbol yang optimal, pakai Windows
+Terminal versi terbaru (bukan `cmd.exe` lama).

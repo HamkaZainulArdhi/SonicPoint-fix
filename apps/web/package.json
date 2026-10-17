@@ -12,9 +12,12 @@
   "dependencies": {
     "@google/genai": "^2.30.0",
     "@supabase/supabase-js": "^2.105.4",
+    "gray-matter": "^4.0.3",
     "next": "^15.0.0",
+    "next-mdx-remote": "^6.0.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",
