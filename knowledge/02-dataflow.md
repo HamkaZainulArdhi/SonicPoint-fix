@@ -20,7 +20,8 @@ graph LR
     C -->|prompt payload| P[Platform BE]
     P -->|Gemini, service_role| DB[(Supabase)]
     C -->|POST /api/report| P
-    C -->|refs cache + session cache| F[.sonic-point.json]
+    C -->|refs cache| F[.sonic-point.json]
+    C -->|session cache (send)| S[.sonic-point/session-cache.json]
     DB -->|SELECT anon| W[Web Next.js]
     W -->|render| R[/report/:sessionId]
 ```
@@ -28,7 +29,7 @@ graph LR
 ## Tahapan
 
 1. **Scan** (lokal, tanpa network): `findCodeFiles → parseFile (Babel) → collectRouteFile → buildRouteTree → scanEndpoints`. Detail di Vault CLI.
-2. **Send** (ke backend target user): `login → checkServer → resolvePath → resolvePayload → request → save cache`. Write body: reference id (`lahanId`) di-sampling dari GET collection user lalu di-cache di `.sonic-point.json` (`refs`) — tanpa itu AI mengarang id → 404 (ADR-08). Payload AI sendiri minta ke platform (`POST /api/ai/payload`). Cache session: `<root>/.sonic-point/session-cache.json`.
+2. **Send** (ke backend target user): `login → checkServer → resolvePath → resolvePayload → request → save cache`. Write body: reference id (`lahanId`) di-sampling dari GET collection user lalu di-cache di `.sonic-point.json` (`refs`) — tanpa itu AI mengarang id → 404 (ADR-08). Payload AI sendiri minta ke platform (`POST /api/ai/payload`). Cache session: `<root>/.sonic-point/session-cache.json` — hanya `send` yang menulis file ini; REPL `/test` menumpuk in-memory dan hilang saat exit (C-ADR-22 CLI).
 3. **Publish**: `POST /api/report` di platform → `upsertProject(slug) → openSession(running) → appendResults → closeSession(completed + totals)` (passed + failed + skipped). Filter opsional `method + path`. Fallback: Supabase langsung kalau platform tak terjangkau dan user punya key lokal (ADR-09). Tanpa store → `skipped`.
 4. **Render** (`queries.ts`): `getProjects → getProjectBySlug → getSessionsByProject → getSessionById → getEndpointsBySession`. Read-only.
 

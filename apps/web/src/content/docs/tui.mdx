@@ -18,7 +18,7 @@ core yang sama dengan command mode — hasilnya konsisten.
 | `/schema [METHOD] [PATH]` | Endpoint body + schema + Required/Optional. |
 | `/context [METHOD] [PATH]` | Rantai controller/service/model/schema/auth. |
 | `/test METHOD [PATH]` | Jalankan pengujian (method wajib). |
-| `/report [METHOD] [PATH]` | Terbitkan hasil cache. |
+| `/report [METHOD] [PATH]` | Terbitkan sesi berjalan — boleh berkali-kali. |
 | `/config` | Edit kredensial target lewat tanya-jawab di prompt. |
 | `/clear` / `/quit` | Bersihkan transcript / keluar. |
 
@@ -43,8 +43,11 @@ trailing slash dinormalisasi, dan path konkret juga cocok dengan template
 | Tanpa kredensial | `Run /config first` | Prompt `init`-style |
 
 Prasyarat `/test`: `.sonic-point.json` sudah ada (lewat `/config` atau `init`).
-Hasil otomatis tersimpan ke cache dan langsung siap di-`/report`. Satu run
-dalam satu waktu — input lain menunggu sampai selesai.
+Hasil beberapa `/test` menumpuk dalam satu sesi selama CLI berjalan — endpoint
+yang sama diuji ulang menyimpan hasil terbaru. Sesi ini siap di-`/report`
+kapan saja dan **hilang saat CLI ditutup** — tidak ada file yang tertinggal,
+jadi publish dulu sebelum `/quit`. Satu run dalam satu waktu — input lain
+menunggu sampai selesai.
 
 ## `/config` — enam langkah
 

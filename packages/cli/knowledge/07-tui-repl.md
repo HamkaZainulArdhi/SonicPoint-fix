@@ -8,8 +8,10 @@ tags:
 status: active
 source:
   - src/tui/
+  - src/config/sessions.ts
   - src/cli/program.ts
   - tests/repl.test.ts
+  - tests/session-merge.test.ts
 ---
 
 # Interactive REPL (TUI) — `sonic-point` tanpa argumen
@@ -48,7 +50,7 @@ transcript output
 | `shell/Home.tsx` | Banner + Project/Framework/Status ● Ready | `resolveProject` (via `runTui.ts`) |
 | `shell/runTui.ts` | Entry `render()` + TTY guard | `resolveProject` |
 | `repl/commandRegistry.ts` | Registry 8 command + parser + Enter-accept (murni, unit-tested) | — |
-| `repl/dispatchCommands.ts` | Dispatch ke core (+ `runTest` async untuk `/test`) | `scanEndpoints`, `scanSchemas`, `groupEndpointsByFile`, `buildApiGraph`, `buildKnowledgeGraph`, `runSession` |
+| `repl/dispatchCommands.ts` | Dispatch ke core (+ `runTest` async untuk `/test`; working session in-memory via `deps.store`) | `scanEndpoints`, `scanSchemas`, `groupEndpointsByFile`, `buildApiGraph`, `buildKnowledgeGraph`, `runSession` |
 | `repl/testArgs.ts` | Parser strict `/test` — method wajib, bulk cuma GET (murni, unit-tested) | — |
 | `repl/filterArgs.ts` | Parser lenient `[METHOD] [PATH]` + matcher — dipakai `/report`, `/schema`, `/context` (murni, unit-tested) | — |
 | `repl/configForm.ts` | State machine `/config` 6 langkah + validasi + `draftToCredentials` (murni, unit-tested) | `loadCredentials/saveCredentials` shape (`config/app.ts`) |
@@ -78,13 +80,14 @@ Slash commands: `/scan /schema /context /test /report /config /clear /quit` — 
 - `/test` (method wajib): `/test GET` = semua GET; `/test POST /api/v1/lahan` = 1 endpoint. Bulk write ditolak (`/test POST` tanpa path → error). Detail: [[05-decisions-todo]] C-ADR-15/16.
   - AUTH gate: kredensial harus sudah ada (via `/config` atau `init`); tanpa kredensial → `Not configured — Run /config first` lalu berhenti. Tidak pernah prompt `inquirer` di Ink, secret tidak pernah masuk transcript.
   - `:id`: sampling otomatis dari GET collection sibling → nilai konkret eksplisit (`/test GET /api/items/item-42` via `RunOptions.paramDefaults`) → `skipped` jujur + hint id konkret. Bulk GET di-sort statis-dulu agar cache sampling siap.
+  - **Sesi menumpuk (in-memory)**: hasil antar-run di-merge ke satu working session (`MergingSessionStore`, tanpa file) — kunci `METHOD + path` template; re-test = hasil terbaru menggantikan di posisi yang sama, `order` dinomori ulang 1..N, rentang waktu = union. Tiap run ditutup baris dim `Session so far: N endpoints — /report publishes all of them.` CLI ditutup (cara apa pun) = sesi hilang; tidak ada sisa cache. Detail: [[05-decisions-todo]] C-ADR-22.
   - Async: `ReplApp.submit` async + guard `isRunning` (satu run dalam satu waktu, anti double-send; pesan tolak generik `Already running — wait for it to finish.`). Entry interim dirender `<SpinnerLine label>`, bukan teks mati: frame braille `⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏` @80ms, **spinner amber + teks putih**, tanpa elapsed (`shell/Spinner.tsx`); otomatis diganti hasil asli saat run selesai (tidak pernah bocor ke transcript, `setInterval` dibersihkan). Tanpa `ora` di TUI (rebut stdout Ink).
   - FK body (`lahanId`): id di-sampling dari API user lalu di-cache di `.sonic-point.json` → baris notice dim prepend ke hasil: `↳ refs.lahan = <id> (saved)` / `↳ refs.lahan was stale — refreshed to <id>`. Sumber: `RunEvents.refSampled` + `run/refs.ts:refNotice`. Detail pipeline: [[02-run]], keputusan: C-ADR-19.
 - `/config` (6 langkah, Ink-native): `Base URL → Login endpoint → Email → Password (masked) → Token field path → Token (opsional)`. Default = fallback existing `prompt.ts`; Enter = keep current. Validasi per langkah (URL http(s), endpoint diawali `/`, email/password wajib kalau token kosong). Tulis hanya di Step 6/6 via `saveCredentials` yang sama dengan `init` (byte-identical, `✔ Backend target config saved.`); tanpa probe network (keputusan user). `Esc` cancel tanpa tulis; `/clear` tengah-flow = cancel + clear (keputusan user); guard silang dengan `isRunning`. Password ter-mask (`•`) + ter-redact (`(set)`/`(empty)`). Detail: [[05-decisions-todo]] C-ADR-17.
-- `/report` (async, guard sama dengan `/test`): `SessionStore.load` → `publishViaPlatform` (BE, `SONIC_POINT_PLATFORM_URL`) → fallback Supabase langsung kalau platform tak terjangkau dan key lokal ada. Filter `[METHOD] [PATH]`; entry interim `Publishing…` juga lewat `SpinnerLine`.
+- `/report` (async, guard sama dengan `/test`): working session REPL dulu (`deps.store.load()`), fallback ke `session-cache.json` hasil `send` kalau sitting masih kosong → `publishViaPlatform` (BE, `SONIC_POINT_PLATFORM_URL`) → fallback Supabase langsung kalau platform tak terjangkau dan key lokal ada. Filter `[METHOD] [PATH]`; entry interim `Publishing…` juga lewat `SpinnerLine`. Tidak mereset sesi — publish berulang boleh (C-ADR-22).
 - `/clear /quit` bekerja (selalu menang walau ada run berjalan atau flow config). Non-TTY → pesan fallback ke command mode (exit 1, tidak hang).
 - Tampilan `/config`: satu list 6 baris terpadu (`✓` done green / `?` aktif yellow / `?` mendatang dim), nilai selalu dalam parens ganda sebagai placeholder (Enter = pakai yang dalam kurung), tanpa counter `Step i/6`, tanpa hint; prompt zone satu baris `›`. Guidance hanya muncul saat validasi gagal (entry error red, self-contained).
-- Verifikasi terakhir: `typecheck` (kini termasuk `tests/` via `tsconfig.test.json`) + `build` + `test` **130/130** hijau (117 existing + 13 baru: parser `filterArgs` + view `/schema`/`/context` terfilter — C-ADR-21; termasuk `refs.test.ts` + e2e FK di `refs-run.test.ts`); `scan --context` via dist terverifikasi e2e.
+- Verifikasi terakhir: `typecheck` (kini termasuk `tests/` via `tsconfig.test.json`) + `build` + `test` **142/142** hijau (130 existing + 12 baru — C-ADR-22: `mergeSessions`/`MergingSessionStore` di `session-merge.test.ts` + e2e akumulasi/replace/no-file/fallback di `tui-test.test.ts`); `scan --context` via dist terverifikasi e2e.
 - Cek visual interaktif (TTY) dilakukan manual di Windows Terminal — tidak ter-cover automated test (kebijakan: render Ink tidak di-unit-test; hanya layer murni).
 - Batasan sadar: input buffer append-only (tanpa cursor tengah-baris), transcript cap 200, daftar endpoint panjang tanpa paginasi, tanpa navigasi mundur di flow config (follow-up kecil).
 

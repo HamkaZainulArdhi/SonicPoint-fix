@@ -68,3 +68,34 @@ export function summarize(session: Pick<TestSession, "results">): SessionSummary
 
   return { tested: passed + failed + skipped, passed, failed, skipped };
 }
+
+/** Key for one endpoint inside a working session. */
+function resultKey(result: Pick<TestResult, "method" | "path">): string {
+  return `${result.method} ${result.path}`;
+}
+
+/**
+ * One working session: a fresh run merges into the previous session.
+ * Key = `METHOD path` (template) — re-testing an endpoint replaces its
+ * result in place (latest wins), new endpoints append. Orders are
+ * renumbered 1..N and the time window stays the union (earliest start,
+ * latest finish) so the session duration stays honest.
+ */
+export function mergeSessions(previous: TestSession | undefined, next: TestSession): TestSession {
+  if (!previous) return next;
+
+  const merged = new Map<string, TestResult>();
+  for (const result of previous.results) {
+    merged.set(resultKey(result), result);
+  }
+  for (const result of next.results) {
+    merged.set(resultKey(result), result);
+  }
+
+  return {
+    project: next.project,
+    startedAt: previous.startedAt < next.startedAt ? previous.startedAt : next.startedAt,
+    finishedAt: previous.finishedAt > next.finishedAt ? previous.finishedAt : next.finishedAt,
+    results: [...merged.values()].map((result, index) => ({ ...result, order: index + 1 })),
+  };
+}

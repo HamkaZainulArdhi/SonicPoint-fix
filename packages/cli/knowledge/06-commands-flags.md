@@ -93,7 +93,7 @@ Bedanya dengan `send` (SENGAJA, lihat C-ADR-15/16 di [[05-decisions-todo]]):
 | `:param` tak ter-resolve | `skipped` + hint id konkret, tidak pernah prompt | prompt `inquirer` (non-GET) |
 | tanpa kredensial | hard-block `Run /config first` | prompt `askCredentials` |
 
-Prasyarat: `.sonic-point.json` sudah ada (via `/config` atau `init`). Bulk `GET` di-sort statis-dulu agar sampling `:param` dapat data. Hasil auto-tersimpan ke `session-cache.json` (siap `/report`). Satu run dalam satu waktu (`isRunning` guard). Lihat [[07-tui-repl]].
+Prasyarat: `.sonic-point.json` sudah ada (via `/config` atau `init`). Bulk `GET` di-sort statis-dulu agar sampling `:param` dapat data. Hasil menumpuk ke working session **in-memory** (bukan `session-cache.json`) — tiap run ditutup baris dim `Session so far: N endpoints — /report publishes all of them.`; sesi hilang saat CLI exit. Satu run dalam satu waktu (`isRunning` guard). Lihat [[07-tui-repl]] + C-ADR-22 di [[05-decisions-todo]].
 
 ## `/schema` & `/context` (REPL) — view + filter opsional
 

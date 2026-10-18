@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { TestSession } from "../domain/session.js";
+import { TestSession, mergeSessions } from "../domain/session.js";
 
 /** Persists the last send session so `report` can publish it later. */
 export class SessionStore {
@@ -38,5 +38,18 @@ export class SessionStore {
     } catch {
       return undefined;
     }
+  }
+}
+
+/**
+ * One accumulating session for the running REPL — in-memory only.
+ * Construct without `rootDir` so nothing ever touches
+ * `.sonic-point/session-cache.json`: each `save()` merges the fresh run
+ * into the working session, and the whole thing disappears when the
+ * process exits (no file to clean up — even on a hard kill).
+ */
+export class MergingSessionStore extends SessionStore {
+  save(session: TestSession): void {
+    super.save(mergeSessions(this.load(), session));
   }
 }

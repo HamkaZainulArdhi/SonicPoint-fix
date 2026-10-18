@@ -32,7 +32,8 @@ Dibuat oleh [`init`](/docs/init) atau `/config`:
 
 ### `.sonic-point/session-cache.json`
 
-Hasil `send` (atau `/test`) terakhir — jembatan ke `report`.
+Hasil `send` terakhir — jembatan ke `report`. REPL tidak menulis file ini:
+sesi `/test` menumpuk di memori dan hilang saat CLI ditutup.
 
 <Callout kind="warn" title="Jangan ikutkan ke git">
 `.sonic-point.json` memuat email, password, dan token. Tambahkan

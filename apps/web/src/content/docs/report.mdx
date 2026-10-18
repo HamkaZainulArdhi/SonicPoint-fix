@@ -19,11 +19,15 @@ Kedua posisi bersifat opsional dan berguna kalau cache berisi banyak hasil:
 
 ## Prasyarat
 
-Cache hasil dari [`send`](/docs/send) (atau `/test` di REPL). Kalau belum ada:
+Cache hasil dari [`send`](/docs/send). Kalau belum ada:
 
 ```text
 No cached session found. Run sonic-point send first.
 ```
+
+Di [REPL interaktif](/docs/tui), `/report` menerbitkan sesi `/test` yang sedang
+berjalan (menumpuk, in-memory) — bukan cache `send` — dan publish-nya bisa
+diulang tanpa mengosongkan sesi.
 
 ## Dua jalur publish
 

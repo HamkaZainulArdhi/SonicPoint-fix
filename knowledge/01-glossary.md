@@ -15,7 +15,7 @@ source:
 | Istilah | Arti | Kunci |
 |---|---|---|
 | Project | Grup logis hasil scan/test. `slug` unique, dipakai CLI upsert; web tidak lagi menampilkan listing project (fase-1). | `projects.slug` |
-| Session | Satu run `sonic-point send` yang di-publish via `report`. Status `running → completed`. `failed` ada di CHECK tapi `closeSession` selalu tulis `completed`. | `sessions.status` |
+| Session | Satu run `sonic-point send` yang di-publish via `report`. Status `running → completed`. `failed` ada di CHECK tapi `closeSession` selalu tulis `completed`. Di REPL: satu **working session in-memory** menumpuk antar `/test` (`mergeSessions`, kunci `METHOD + path` template) dan hilang saat CLI exit — tidak pernah jadi file. | `sessions.status`; C-ADR-22 CLI |
 | Endpoint (row) | Satu baris per endpoint per session. Full history, no upsert. `path` = template (`/api/items/:itemId`), `resolved_path` = konkret (`/api/items/item-42`). | `endpoints.session_id + execution_order` |
 | Skipped | Hasil yang tidak di-request (param dinamis / tanpa payload). Disimpan sebagai `status_code='SKIPPED'`, `success=false`, `latency_ms=0`. | `store.ts:88-96` |
 | Schema | Definisi validasi Joi/Zod/Yup. Tabel ada, tapi **belum ada insert/select di CLI/Web** — lihat [[05-constraints]]. | `schemas` |

@@ -3,8 +3,18 @@
   "version": "2.9.9",
   "description": "AI Powered API Endpoint Scanner & Sender",
   "type": "module",
-  "publishConfig": { "access": "public" },
-  "files": ["dist", "README.md"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HamkaZainulArdhi/SonicPoint-fix",
+    "directory": "packages/cli"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "dev": "tsx bin/index.ts",
     "clean": "node --input-type=module -e \"import fs from 'node:fs'; fs.rmSync('dist', { recursive: true, force: true })\"",

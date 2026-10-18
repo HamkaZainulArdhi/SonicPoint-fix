@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { describe, it } from "node:test";
 
 import { saveCredentials } from "../src/config/app.js";
-import { SessionStore } from "../src/config/sessions.js";
+import { MergingSessionStore, SessionStore } from "../src/config/sessions.js";
 import { runReport, runTest } from "../src/tui/repl/dispatchCommands.js";
 import {
   concreteParamsForTemplate,
@@ -312,5 +314,108 @@ describe("runReport (in-TUI publish)", () => {
     assert.match(bad.map((line) => line.text).join("\n"), /Unknown \/report filter/);
     const many = await runReport(root, ["GET", "/a", "/b"], { fetchImpl: noNetwork });
     assert.match(many.map((line) => line.text).join("\n"), /Too many arguments/);
+  });
+});
+
+describe("REPL session accumulation (in-memory)", () => {
+  it("accumulates across runs, replaces re-tested endpoints, and never writes a cache file", async () => {
+    const root = fixture();
+    const server = await startServer((request) => {
+      if (request.url === "/api/items/") return { body: { data: [{ id: "item-1" }] } };
+      return { body: { data: { id: "item-1" } } };
+    });
+
+    try {
+      saveCredentials(root, credentials(server.url, true));
+      const store = new MergingSessionStore();
+
+      const first = await runTest(root, ["GET", "/api/items/item-99"], { store });
+      assert.match(first.map((line) => line.text).join("\n"), /Session so far: 1 endpoint/);
+
+      const second = await runTest(root, ["GET", "/api/items"], { store });
+      assert.match(second.map((line) => line.text).join("\n"), /Session so far: 2 endpoints/);
+
+      const third = await runTest(root, ["GET"], { store });
+      assert.match(third.map((line) => line.text).join("\n"), /Session so far: 2 endpoints/);
+
+      const session = store.load();
+      assert.ok(session);
+      // A concrete-id run lands on the `:itemId` template key, so the later
+      // bulk run replaces it in place; the collection was re-tested too.
+      // (`router.get("/")` + mount records the collection as `/api/items/`.)
+      assert.deepEqual(
+        session.results.map((result) => `${result.method} ${result.path}`),
+        ["GET /api/items/:itemId", "GET /api/items/"],
+      );
+      assert.deepEqual(session.results.map((result) => result.order), [1, 2]);
+      assert.equal(session.results[0].resolvedPath, "/api/items/item-1");
+
+      assert.equal(existsSync(path.join(root, ".sonic-point", "session-cache.json")), false);
+    } finally {
+      await server.close();
+    }
+  });
+
+  it("keeps the working session intact when a run fails", async () => {
+    const root = fixture();
+    const server = await startServer(() => ({ body: { data: [{ id: "item-1" }] } }));
+
+    try {
+      saveCredentials(root, credentials(server.url, true));
+      const store = new MergingSessionStore();
+      await runTest(root, ["GET", "/api/items"], { store });
+      assert.equal(store.load()?.results.length, 1);
+
+      saveCredentials(root, credentials("http://127.0.0.1:1", true));
+      const failed = await runTest(root, ["GET"], { store });
+      assert.match(failed.map((line) => line.text).join("\n"), /Cannot reach server/);
+      assert.equal(store.load()?.results.length, 1);
+    } finally {
+      await server.close();
+    }
+  });
+
+  it("publishes the whole working session via /report", async () => {
+    const root = tmpDir("tui-report-memory");
+    const store = new MergingSessionStore();
+    store.save(sampleSession({ results: [executedResult({ order: 1, method: "GET", path: "/api/items" })] }));
+    store.save(
+      sampleSession({ results: [executedResult({ order: 1, method: "POST", path: "/api/orders", statusCode: 201 })] }),
+    );
+
+    let seenBody = "";
+    const fakeFetch = (async (_url: string, init?: { body?: string }) => {
+      seenBody = String(init?.body ?? "");
+      return {
+        ok: true,
+        json: async () => ({
+          status: "published",
+          receipt: { sessionId: "s2", published: 2, reportUrl: "https://sonicpoint.vercel.app/report/s2" },
+        }),
+      };
+    }) as unknown as typeof fetch;
+
+    const lines = await runReport(root, [], { store, fetchImpl: fakeFetch });
+    const text = lines.map((line) => line.text).join("\n");
+    assert.match(text, /Published 2 endpoints/);
+    assert.match(text, /sonicpoint\.vercel\.app\/report\/s2/);
+    assert.match(seenBody, /"path":"\/api\/items"/);
+    assert.match(seenBody, /"path":"\/api\/orders"/);
+  });
+
+  it("falls back to the cached send session when the REPL sitting is empty", async () => {
+    const root = tmpDir("tui-report-fallback");
+    new SessionStore(root).save(sampleSession());
+
+    const fakeFetch = (async () => ({
+      ok: true,
+      json: async () => ({
+        status: "published",
+        receipt: { sessionId: "s3", published: 1, reportUrl: "https://sonicpoint.vercel.app/report/s3" },
+      }),
+    })) as unknown as typeof fetch;
+
+    const lines = await runReport(root, [], { store: new MergingSessionStore(), fetchImpl: fakeFetch });
+    assert.match(lines.map((line) => line.text).join("\n"), /Published 1 endpoints/);
   });
 });

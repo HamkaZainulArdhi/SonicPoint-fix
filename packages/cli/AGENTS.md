@@ -34,6 +34,7 @@ tests/                   # node:test suites (fixtures generic!) + helpers/ (tmp 
 ## Rules that matter
 
 - `runSession()` returns data; spinners/progress only via `RunOptions.events`. Never `console.*` in scan/run/report/ai/config.
+- REPL session = **in-memory working session** (`MergingSessionStore` tanpa `rootDir`): `/test` menumpuk via `mergeSessions()` (kunci `METHOD + path` template) dan hilang saat CLI exit; REPL tidak pernah menulis `session-cache.json` — file itu hanya jembatan `send` → `report`.
 - Library functions throw (`ScanError`, `RunError`); only `cli/commands.ts` catches and sets `exitCode`.
 - Test results are a single `TestResult[]` with `kind: "executed" | "skipped"` — no parallel results/skipped arrays.
 - Warnings are data (`Resolved<T>.warnings`); only CLI prints them.

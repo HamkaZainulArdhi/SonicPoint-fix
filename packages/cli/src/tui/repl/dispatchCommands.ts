@@ -125,6 +125,12 @@ function handleCommand(rootDir: string, name: string, args: string[]): HandlerRe
 
 export interface RunTestDeps {
   fetchImpl?: Fetch;
+  /**
+   * REPL working session (in-memory `MergingSessionStore`): runs accumulate
+   * in one session while the CLI is open. Without it the run writes
+   * `session-cache.json` like `send` does.
+   */
+  store?: SessionStore;
 }
 
 /**
@@ -135,6 +141,9 @@ export interface RunTestDeps {
  * - :param prompting: never prompts; unresolvable params become `skipped`
  *   results with a concrete-id hint (same honesty as GET in params.ts).
  * - No ora spinner (would fight Ink); ReplApp shows one static interim line.
+ * - Working session: the REPL passes its in-memory `MergingSessionStore`
+ *   (deps.store) so runs accumulate in one session; the REPL never writes
+ *   `session-cache.json` — quitting the CLI discards the session entirely.
  * - Secrets (password/token) are never rendered into transcript lines.
  */
 export async function runTest(rootDir: string, args: string[], deps?: RunTestDeps): Promise<OutputLine[]> {
@@ -220,14 +229,27 @@ export async function runTest(rootDir: string, args: string[], deps?: RunTestDep
       ai,
       // Never prompt inside the REPL — unresolvable :params become `skipped`.
       prompter: { askParam: async () => null },
-      store: new SessionStore(rootDir),
+      store: deps?.store ?? new SessionStore(rootDir),
       paramDefaults,
       fetchImpl: deps?.fetchImpl,
       events: {
         refSampled: (ref) => refNotices.push({ text: refNotice(ref), tone: "dim" }),
       },
     });
-    return [...warnings, ...refNotices, ...toTestLines(session)];
+
+    // Honesty line: the working session spans all /test runs in this CLI
+    // sitting — /report publishes the whole thing, not just this run.
+    const count = (deps?.store?.load() ?? session).results.length;
+
+    return [
+      ...warnings,
+      ...refNotices,
+      ...toTestLines(session),
+      {
+        text: `Session so far: ${count} endpoint${count === 1 ? "" : "s"} — /report publishes all of them.`,
+        tone: "dim",
+      },
+    ];
   } catch (error) {
     const raw = error instanceof RunError || error instanceof Error ? error.message : String(error);
     const prefix = raw.includes("Cannot reach login endpoint")
@@ -249,17 +271,20 @@ export async function runTest(rootDir: string, args: string[], deps?: RunTestDep
 
 export interface RunReportDeps {
   fetchImpl?: typeof fetch;
+  /** REPL working session; when empty, falls back to the cached `send` session. */
+  store?: SessionStore;
 }
 
 /**
  * Full /report flow — the REPL equivalent of `reportCommand` (commands.ts).
- * Publishes the cached session (written by /test) via the platform BE,
+ * Publishes the working session accumulated by /test (deps.store, in-memory)
+ * or, when that is empty, the cached `send` session — via the platform BE,
  * which stores passed, failed and skipped results for the summary cards.
  * Falls back to direct Supabase only when the platform is unreachable
  * and local credentials exist. Never throws — outcomes are transcript lines.
  */
 export async function runReport(rootDir: string, args: string[], deps?: RunReportDeps): Promise<OutputLine[]> {
-  const session = new SessionStore(rootDir).load();
+  const session = deps?.store?.load() ?? new SessionStore(rootDir).load();
 
   if (!session) {
     return [

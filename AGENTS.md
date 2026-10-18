@@ -7,9 +7,10 @@ Gabungan `sonic-dashboard` + `sonic-point` lama. Satu `pnpm-workspace.yaml` di r
 ```
 apps/web/src/
   app/                    # App Router: page.tsx (landing statis), docs/[[...slug]]/ (MDX statis),
-                          # report/[sessionId]/ (force-dynamic), not-found.tsx, icon.svg
-  components/             # presentational: SiteHeader/Footer, CodeBlock, MethodChip/StatusBadge,
-                          # EndpointList (filter klien), mdx.tsx (map elemen MDX), ui.ts (kelas pill/card)
+                          # report/[sessionId]/ (force-dynamic), not-found.tsx, icon.png (logo PNG)
+  components/             # presentational + primitif: ui.tsx (btn/LogoMark/Badge/Kbd/Section/…),
+                          # landing/* (9 section landing), SiteHeader (nav kaca + scroll-spy)/MiniHeader, InstallButton, CodeBlock,
+                          # MethodChip/StatusBadge, EndpointList (filter klien), mdx.tsx (map elemen MDX)
   content/docs/*.mdx      # konten dokumentasi (Indonesia); urutan halaman = docsNav di lib/docs.ts
   lib/
     supabase.ts           # getSupabase() — lazy client, JANGAN bikin eager
@@ -17,6 +18,8 @@ apps/web/src/
     docs.ts               # docsNav + pembaca MDX (gray-matter, slugify, TOC, prev/next)
     format.ts             # helper presentasi (JSON pretty, tanggal id-ID, latensi)
     site.ts               # konstanta identitas (nama, GitHub, npm, perintah install)
+    landing.ts            # data/teks landing (model Seg/Line)
+    use-copy.ts           # hook salin clipboard (install box, tombol salin)
   types/index.ts          # FE types, mirror schema SQL (sengaja tidak share dengan CLI)
 packages/cli/
   bin/index.ts → src/cli/program.ts (commander wiring, thin)
@@ -49,7 +52,7 @@ Tidak ada test runner untuk web — belum ada test. `next lint` deprecated di Ne
 - **Landing & docs statis; hanya report `force-dynamic`.** `/` dan `/docs/[[...slug]]` TIDAK boleh import Supabase — keduanya prerender saat build tanpa env. Jangan tambah `force-dynamic` di sana. `/report/[sessionId]` sebaliknya wajib `export const dynamic = "force-dynamic"`.
 - **`/docs/[[...slug]]` memakai `dynamicParams = false`** — semua file `.mdx` dibaca saat build (fs runtime dengan path dinamis tidak ikut ter-trace Vercel, jadi jangan pernah melepas ini). Konsekuensi: slug tak dikenal → 404 benar, tapi `next start` menulis log `NoFallbackError` (quirk Next, bukan bug — jangan "perbaiki" dengan menghapus `dynamicParams`).
 - **Docs engine hand-rolled:** `next-mdx-remote/rsc` + `gray-matter` + `remark-gfm`. Menambah halaman = file `.mdx` di `src/content/docs/` + entri di `docsNav` (`lib/docs.ts`) — build gagal kalau nav menunjuk file hilang. Judul h2/h3 harus teks polos; anchor & TOC dua-duanya lewat `slugify()` yang sama (jangan ubah sepihak).
-- **Design system di `@theme` `globals.css`** (tema amber, dark-only, tanpa toggle). Token di `:root` polos tidak menghasilkan utility Tailwind — jangan letakkan warna/ukuran di sana. Radius hanya `rounded-full`/`rounded-2xl`/`rounded-lg`; weight maksimum 500; tanpa shadow/gradien. Warna fungsional (`ok`, `err`, `method-*`) hanya untuk data di report viewer. Aturan lengkap: `apps/web/DESIGN.md`.
+- **Design system di `@theme` `globals.css`** ("Midnight + Amber", dark-only, tanpa toggle). Token di `:root` polos tidak menghasilkan utility Tailwind — jangan letakkan warna/ukuran di sana. Satu aksen amber untuk aksen teknis; CTA tetap netral (`btn-primary` fill `mist`, `btn-ghost` obsidian). Warna fungsional (`ok`, `warn`, `err`, `method-*`) hanya saat membawa status/hasil (merah = 4xx/5xx + DELETE, biru = chip GET). Nilai arbitrary (gradien/blur/mask) hanya di `globals.css`, weight maksimum 500. Aturan lengkap: `apps/web/DESIGN.md`.
 - **Tidak ada listing project/session lagi.** Route `/projects/[projectId]` dihapus; viewer publik hanya `/report/[sessionId]` (unlisted by UUID, tanpa auth). Jangan hidupkan kembali query listing.
 - **Supabase client web harus lazy (`getSupabase()`).** Eager `createClient` di module scope merusak `next build` saat env belum diisi. Query selalu lewat `queries.ts`.
 - **Env web: client anon + server-only.** Client hanya `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` (read-only). Server-only (Vercel Production, jangan prefix `NEXT_PUBLIC_`): `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY` + `GEMINI_MODEL`(+`_CANDIDATES`), `SONIC_POINT_REPORT_BASE_URL`. Lihat `.env.example` + ADR-09.
@@ -60,4 +63,5 @@ Tidak ada test runner untuk web — belum ada test. `next lint` deprecated di Ne
 - **Tailwind v4** (`@import "tailwindcss"` di `globals.css`, plugin via `@tailwindcss/postcss`). Tidak ada `tailwind.config.js`.
 - **Types FE dan CLI sengaja duplikat**, bukan shared package (keputusan desain). Sinkronisasi manual via schema SQL.
 - **CLI rules:** `runSession()` returns data; spinners hanya via `RunOptions.events`. Never `console.*` di scan/run/report/ai/config. Library throw (`ScanError`, `RunError`); hanya `cli/commands.ts` yang catch + set `exitCode`. Test CLI pakai `node:test` + `node:assert/strict`, fixtures di `os.tmpdir()`, isolate provider writes dengan `SONIC_POINT_HOME` ke tmp.
+- **Sesi REPL menumpuk in-memory.** `/test` merge ke satu working session (`MergingSessionStore` tanpa `rootDir` + `mergeSessions()` di domain) yang hilang saat CLI exit; REPL tidak pernah menulis `.sonic-point/session-cache.json` — file itu hanya jembatan `send` → `report`. Detail: C-ADR-22 (`packages/cli/knowledge/05-decisions-todo.md`).
 - **Dependensi:** `@supabase/supabase-js` + `@types/node` disamakan versinya di kedua workspace. `typescript` sengaja beda major (web 5.x untuk Next 15, CLI 6.x). Jangan samakan TS.

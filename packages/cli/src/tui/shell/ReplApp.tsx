@@ -3,7 +3,7 @@
 // never the app itself. Completed commands append to the transcript and
 // return to the prompt. Business logic lives in handlers.ts + Core.
 
-import { useRef, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { Box, Text, useApp, useInput } from "ink";
 import { ParsedInput, SlashCommand, parseSlashInput, resolveEnter, suggestCommands } from "../repl/commandRegistry.js";
 import { browseDown, browseUp, emptyHistory, HistoryState, pushHistory, resetBrowsing } from "../repl/history.js";
@@ -21,6 +21,7 @@ import {
 } from "../repl/configForm.js";
 import { configPromptLabel, maskValue, toConfigFlowLines } from "../views/configView.js";
 import { loadCredentials, saveCredentials } from "../../config/app.js";
+import { MergingSessionStore } from "../../config/sessions.js";
 import { Home } from "./Home.js";
 
 export interface ReplAppProps {
@@ -49,6 +50,10 @@ export function ReplApp({ rootDir, projectName, projectSlug, framework }: ReplAp
   // ones). Independent from the transcript — /clear never touches it.
   // Secrets can't land here: the /config flow never goes through submit().
   const historyRef = useRef<HistoryState>(emptyHistory());
+  // REPL working session — in-memory only (`MergingSessionStore` without
+  // rootDir): `/test` merges into it and `/report` publishes it. Quitting
+  // the CLI discards it; no cache file is ever written or left behind.
+  const sessionStore = useMemo(() => new MergingSessionStore(), []);
 
   // /config multi-turn flow: prompt state lives here (never inquirer —
   // inquirer would steal the same TTY Ink reads via useInput).
@@ -315,7 +320,7 @@ export function ReplApp({ rootDir, projectName, projectSlug, framework }: ReplAp
         capTranscript([...prev, { id, command, lines: [{ text: "Testing…", tone: "dim" }] }]),
       );
       try {
-        const lines = await runTest(rootDir, parsed.args);
+        const lines = await runTest(rootDir, parsed.args, { store: sessionStore });
         setEntries((prev) => prev.map((entry) => (entry.id === id ? { ...entry, lines } : entry)));
       } finally {
         runningRef.current = false;
@@ -349,7 +354,7 @@ export function ReplApp({ rootDir, projectName, projectSlug, framework }: ReplAp
         capTranscript([...prev, { id, command, lines: [{ text: "Publishing…", tone: "dim" }] }]),
       );
       try {
-        const lines = await runReport(rootDir, parsed.args);
+        const lines = await runReport(rootDir, parsed.args, { store: sessionStore });
         setEntries((prev) => prev.map((entry) => (entry.id === id ? { ...entry, lines } : entry)));
       } finally {
         runningRef.current = false;

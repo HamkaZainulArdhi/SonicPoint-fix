@@ -43,7 +43,7 @@ source:
 
 ## `SessionStore` (`config/sessions.ts`)
 
-`<root>/.sonic-point/session-cache.json` (`{session}`). In-memory fallback jika tanpa `rootDir`. Jembatan `send → report`. `load()` return `undefined` on parse fail → CLI fail `run send dulu`.
+`<root>/.sonic-point/session-cache.json` (`{session}`). In-memory fallback jika tanpa `rootDir`. **Jembatan `send → report`** (satu-satunya penulis file). `load()` return `undefined` on parse fail → CLI fail `run send dulu`. REPL tidak memakai file: `MergingSessionStore` (subclass, tanpa `rootDir`) menumpuk working session in-memory via `mergeSessions()` — hilang saat exit; `/report` membacanya dulu sebelum fallback ke file ini. Detail: C-ADR-22 di [[05-decisions-todo]].
 
 ## AI guide
 

@@ -46,9 +46,9 @@ export function Hero() {
         </h1>
 
         <p className="mx-auto mt-6 max-w-[540px] text-body text-ash">
-          SonicPoint membaca router Express-mu langsung dari AST, menyusun
+          SonicPoint membaca router langsung dari AST, menyusun
           payload dari schema validasi, menyampel ID relasi asli dari API-mu,
-          lalu menerbitkan laporan bergaya Swagger lewat satu link.
+          lalu menerbitkan dokumentasi API lewat satu link.
         </p>
 
         <PkgSwitcher />

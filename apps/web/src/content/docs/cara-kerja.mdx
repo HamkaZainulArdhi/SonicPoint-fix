@@ -33,7 +33,8 @@ Karena sumbernya kode, hasilnya deterministik dan tidak butuh server hidup.
 3. **Per endpoint** — isi `:param` dengan id hasil sampling, susun body dari
    schema validasi, lalu kirim request dengan header `Authorization: Bearer`.
 4. **Simpan** hasil ke `.sonic-point/session-cache.json` — jembatan menuju
-   `report`.
+   `report`. (Di REPL `/test`, sesi hidup di memori saja dan hilang saat CLI
+   ditutup — lihat [REPL interaktif](/docs/tui).)
 
 ### 3. Report — publikasi dan viewer
 
@@ -66,7 +67,7 @@ menuliskannya apa adanya.
 | File | Isi | Ditulis oleh |
 |---|---|---|
 | `.sonic-point.json` | base URL, kredensial login, token, cache `refs` | `init`, `/config`, `send` |
-| `.sonic-point/session-cache.json` | hasil `send` terakhir | `send`, `/test` |
+| `.sonic-point/session-cache.json` | hasil `send` terakhir | `send` |
 | `~/.sonic-point/providers.json` | Gemini key & Supabase (opsional) | `init` |
 
 Ada juga `~/.sonic-point/` yang bisa dipindah dengan env `SONIC_POINT_HOME`.
